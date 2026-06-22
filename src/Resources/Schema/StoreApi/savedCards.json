@@ -1,0 +1,107 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Crehler Payment Bundle - Saved Card Tokens",
+    "version": "1.0.0",
+    "description": "Store API endpoint for retrieving customer's saved payment card tokens. Cards are tokenized by the payment gateway and stored for recurring use."
+  },
+  "paths": {
+    "/cr/payment/card-tokens": {
+      "get": {
+        "tags": ["Crehler Payment", "Saved Cards"],
+        "summary": "Get customer's saved card tokens",
+        "description": "Returns a list of payment cards previously saved (tokenized) by the customer through the payment gateway. Only available for authenticated non-guest customers. Guest customers always receive an empty collection.",
+        "operationId": "crehlerSavedCardTokens",
+        "security": [{ "ApiKey": [], "ContextToken": [] }],
+        "responses": {
+          "200": {
+            "description": "List of saved card tokens",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedCardTokensResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Customer is not logged in"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "SavedCardTokensResponse": {
+        "type": "object",
+        "description": "Collection of saved card tokens.",
+        "properties": {
+          "elements": {
+            "type": "array",
+            "description": "List of saved payment cards. Empty array for guest customers or customers with no saved cards.",
+            "items": {
+              "$ref": "#/components/schemas/SavedCardStruct"
+            }
+          },
+          "apiAlias": {
+            "type": "string",
+            "example": "cr_payment_saved_card_token_response"
+          }
+        }
+      },
+      "SavedCardStruct": {
+        "type": "object",
+        "description": "A single saved payment card token.",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "Opaque token identifying the saved card at the payment gateway. Used when initiating a payment with a saved card."
+          },
+          "brandImgUrl": {
+            "type": "string",
+            "description": "URL to the card brand logo image.",
+            "example": "/bundles/crehlerpayubundle/icons/visa.svg"
+          },
+          "status": {
+            "type": "string",
+            "description": "Current status of the card token at the payment gateway.",
+            "example": "ACTIVE"
+          },
+          "expirationYear": {
+            "type": "integer",
+            "description": "Card expiration year (4 digits).",
+            "example": 2027
+          },
+          "expirationMonth": {
+            "type": "integer",
+            "description": "Card expiration month (1-12).",
+            "example": 3
+          },
+          "cardNumberMasked": {
+            "type": "string",
+            "description": "Masked card number showing only the last 4 digits.",
+            "example": "****1234"
+          },
+          "cardBrand": {
+            "type": "string",
+            "description": "Card brand name.",
+            "example": "Visa"
+          },
+          "preferred": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether this card is marked as the customer's preferred/default card. Defaults to false."
+          },
+          "cardScheme": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional card scheme identifier (e.g. for co-branded cards).",
+            "example": "MC"
+          }
+        },
+        "required": ["token", "brandImgUrl", "status", "expirationYear", "expirationMonth", "cardNumberMasked", "cardBrand"]
+      }
+    }
+  }
+}

@@ -1,0 +1,149 @@
+{% block cr_payment_refund_modal %}
+<div class="cr-refund-overlay" @click="onClose">
+    <div class="cr-refund-dialog" @click.stop>
+
+        {% block cr_payment_refund_modal_header %}
+        <div class="cr-refund-dialog__header">
+            <h3 class="cr-refund-dialog__title">{{ $tc('cr-payment-refund.modal.title') }}</h3>
+            <button type="button" class="cr-refund-dialog__close" @click="onClose">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+        </div>
+        {% endblock %}
+
+        {% block cr_payment_refund_modal_body %}
+        <div class="cr-refund-dialog__body">
+
+            {% block cr_payment_refund_modal_tabs %}
+            <div class="cr-refund-tabs">
+                <div class="cr-refund-tabs__group">
+                    <button type="button" class="cr-refund-tab" :class="{ 'cr-refund-tab--active': mode === 'full' }" @click="selectMode('full')">
+                        {{ $tc('cr-payment-refund.modal.modeFull') }}
+                    </button>
+                    <button type="button" class="cr-refund-tab" :class="{ 'cr-refund-tab--active': mode === 'partial' }" @click="selectMode('partial')">
+                        {{ $tc('cr-payment-refund.modal.modePartial') }}
+                    </button>
+                    <button type="button" class="cr-refund-tab" :class="{ 'cr-refund-tab--active': mode === 'lineItems' }" :disabled="!hasLineItems" @click="selectMode('lineItems')">
+                        {{ $tc('cr-payment-refund.modal.modeLineItems') }}
+                    </button>
+                </div>
+            </div>
+            {% endblock %}
+
+            {% block cr_payment_refund_modal_partial %}
+            <div v-if="mode === 'partial'" class="cr-refund-block">
+                <label class="cr-refund-flabel">{{ $tc('cr-payment-refund.modal.amount') }}</label>
+                <div class="cr-refund-stepper">
+                    <input
+                        type="number"
+                        class="cr-refund-stepper__input"
+                        v-model.number="amount"
+                        min="0"
+                        step="0.01"
+                    />
+                    <span class="cr-refund-stepper__suffix">{{ currencyIsoCode }}</span>
+                    <div class="cr-refund-stepper__btns">
+                        <button type="button" class="cr-refund-stepper__btn" @click="incAmount">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 15 6-6 6 6"/></svg>
+                        </button>
+                        <button type="button" class="cr-refund-stepper__btn" @click="decAmount">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="cr-refund-hint">
+                    {{ $tc('cr-payment-refund.modal.maxAvailable', 0, { amount: formatCurrency(remainingAmount) }) }}
+                </div>
+            </div>
+            {% endblock %}
+
+            {% block cr_payment_refund_modal_items %}
+            <div v-if="mode === 'lineItems'" class="cr-refund-items">
+                <div class="cr-refund-items__head">
+                    <span>{{ $tc('cr-payment-refund.modal.colProduct') }}</span>
+                    <span class="cr-refund-items__c">{{ $tc('cr-payment-refund.modal.colQuantity') }}</span>
+                    <span class="cr-refund-items__r">{{ $tc('cr-payment-refund.modal.colAmount') }}</span>
+                </div>
+                <div v-for="item in items" :key="item.id" class="cr-refund-items__row">
+                    <label class="cr-refund-items__product">
+                        <input type="checkbox" class="cr-refund-checkbox" v-model="item.selected" />
+                        <span class="cr-refund-items__meta">
+                            <span class="cr-refund-items__name">{{ item.label }}</span>
+                            <span v-if="item.productNumber" class="cr-refund-items__sku">{{ item.productNumber }}</span>
+                        </span>
+                    </label>
+                    <input
+                        type="number"
+                        class="cr-refund-items__qty"
+                        v-model.number="item.quantity"
+                        min="1"
+                        :max="item.maxQuantity"
+                    />
+                    <span class="cr-refund-items__amount">{{ formatCurrency(lineAmount(item)) }}</span>
+                </div>
+            </div>
+            {% endblock %}
+
+            {% block cr_payment_refund_modal_reason_code %}
+            <div v-if="hasReasons" class="cr-refund-block cr-refund-block--reason-code">
+                <label class="cr-refund-flabel">
+                    {{ $tc('cr-payment-refund.modal.reasonCode') }}
+                    <span v-if="reasonRequired" class="cr-refund-required">*</span>
+                </label>
+                <select class="cr-refund-select" v-model="reasonCode">
+                    <option value="" disabled>{{ $tc('cr-payment-refund.modal.reasonCodePlaceholder') }}</option>
+                    <option v-for="reasonOption in reasons" :key="reasonOption.code" :value="reasonOption.code">
+                        {{ reasonOption.label }}
+                    </option>
+                </select>
+            </div>
+            {% endblock %}
+
+            {% block cr_payment_refund_modal_reason %}
+            <div class="cr-refund-block cr-refund-block--reason">
+                <label class="cr-refund-flabel">{{ $tc('cr-payment-refund.modal.reason') }}</label>
+                <textarea
+                    class="cr-refund-textarea"
+                    v-model="reason"
+                    rows="3"
+                    :placeholder="$tc('cr-payment-refund.modal.reasonPlaceholder')"
+                ></textarea>
+            </div>
+            {% endblock %}
+
+            {% block cr_payment_refund_modal_summary %}
+            <div class="cr-refund-dialog__summary">
+                <span class="cr-refund-dialog__summary-label">{{ $tc('cr-payment-refund.modal.effectiveAmount') }}</span>
+                <span
+                    class="cr-refund-dialog__summary-value"
+                    :class="{ 'is-error': exceedsRemaining, 'is-muted': !canSubmit && !exceedsRemaining }"
+                >
+                    {{ formatCurrency(effectiveAmount) }}
+                </span>
+            </div>
+            {% endblock %}
+
+        </div>
+        {% endblock %}
+
+        {% block cr_payment_refund_modal_footer %}
+        <div class="cr-refund-dialog__footer">
+            <div class="cr-refund-dialog__brand">
+                <span>{{ $tc('cr-payment-refund.modal.brand') }}</span>
+                <img class="cr-refund-logo cr-refund-logo--footer" src="/bundles/crehlerpayment/img/crehler-logo.svg" alt="CREHLER" />
+            </div>
+            <div class="cr-refund-dialog__actions">
+                <button type="button" class="cr-refund-btn cr-refund-btn--ghost" @click="onClose">
+                    {{ $tc('cr-payment-refund.modal.cancel') }}
+                </button>
+                <button type="button" class="cr-refund-btn cr-refund-btn--primary" :disabled="isSubmitDisabled" @click="onConfirm">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                    {{ $tc('cr-payment-refund.modal.confirm') }}
+                </button>
+            </div>
+        </div>
+        {% endblock %}
+
+    </div>
+</div>
+{% endblock %}

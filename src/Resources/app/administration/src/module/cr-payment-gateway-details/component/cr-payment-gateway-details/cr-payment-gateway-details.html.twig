@@ -1,0 +1,134 @@
+{% block cr_payment_gateway_details %}
+<div class="cr-gw">
+
+    <div class="cr-gw__divider"></div>
+
+    {% block cr_payment_gateway_details_header %}
+    <div class="cr-gw__head">
+        <div class="cr-gw__head-title">
+            <span class="cr-gw__head-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+            </span>
+            <span class="cr-gw__title">{{ $tc('cr-payment-gateway.title') }}</span>
+        </div>
+
+        {% block cr_payment_gateway_details_selector %}
+        <div v-if="hasMultipleTransactions" class="cr-gw__selectwrap">
+            <select class="cr-gw__select" :value="selected" @change="onSelectTransaction">
+                <option v-for="opt in transactions" :key="opt.orderTransactionId" :value="opt.orderTransactionId">
+                    {{ opt.label }}
+                </option>
+            </select>
+            <span class="cr-gw__select-chev">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            </span>
+        </div>
+        {% endblock %}
+    </div>
+    {% endblock %}
+
+    {% block cr_payment_gateway_details_loading %}
+    <sw-skeleton v-if="isLoading" />
+    {% endblock %}
+
+    {% block cr_payment_gateway_details_error %}
+    <sw-alert v-else-if="hasError" variant="warning">
+        {{ $tc('cr-payment-gateway.errorLoading') }}
+    </sw-alert>
+    {% endblock %}
+
+    {% block cr_payment_gateway_details_empty %}
+    <sw-alert v-else-if="!hasTransactions" variant="info">
+        {{ $tc('cr-payment-gateway.noTransaction') }}
+    </sw-alert>
+    {% endblock %}
+
+    {% block cr_payment_gateway_details_content %}
+    <template v-else-if="details">
+        <div class="cr-gw__rows">
+            <!-- Operator + status badge -->
+            <div class="cr-gw__row">
+                <span class="cr-gw__label">{{ $tc('cr-payment-gateway.row.operator') }}</span>
+                <div class="cr-gw__operator">
+                    <span class="cr-gw__chip">{{ details.provider }}</span>
+                    <span class="cr-gw__badge" :class="statusBadgeClass">
+                        <span class="cr-gw__badge-dot"></span>
+                        {{ statusBadgeLabel }}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Transaction ID + copy -->
+            <div class="cr-gw__row">
+                <span class="cr-gw__label">{{ $tc('cr-payment-gateway.row.id') }}</span>
+                <div class="cr-gw__id">
+                    <span class="cr-gw__mono cr-gw__id-value">{{ details.gatewayId }}</span>
+                    <button type="button" class="cr-gw__copy" :title="$tc('cr-payment-gateway.copy')" @click="copyId">
+                        <svg v-if="copied" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16B45E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                        <svg v-else width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Raw gateway status -->
+            <div class="cr-gw__row">
+                <span class="cr-gw__label">{{ $tc('cr-payment-gateway.row.status') }}</span>
+                <span class="cr-gw__mono">{{ details.rawStatus }}</span>
+            </div>
+
+            <!-- Method -->
+            <div class="cr-gw__row">
+                <span class="cr-gw__label">{{ $tc('cr-payment-gateway.row.method') }}</span>
+                <span class="cr-gw__value">{{ details.method || '—' }}</span>
+            </div>
+
+            <!-- Amount -->
+            <div class="cr-gw__row">
+                <span class="cr-gw__label">{{ $tc('cr-payment-gateway.row.amount') }}</span>
+                <span class="cr-gw__amount">{{ amountFormatted }}</span>
+            </div>
+
+            <!-- Created at -->
+            <div class="cr-gw__row">
+                <span class="cr-gw__label">{{ $tc('cr-payment-gateway.row.created') }}</span>
+                <span class="cr-gw__mono">{{ details.createdAt || '—' }}</span>
+            </div>
+
+            <!-- Title -->
+            <div class="cr-gw__row">
+                <span class="cr-gw__label">{{ $tc('cr-payment-gateway.row.title') }}</span>
+                <span class="cr-gw__value">{{ details.title || '—' }}</span>
+            </div>
+
+            <!-- Mode -->
+            <div class="cr-gw__row cr-gw__row--last">
+                <span class="cr-gw__label">{{ $tc('cr-payment-gateway.row.mode') }}</span>
+                <span class="cr-gw__mode">
+                    <span class="cr-gw__mode-dot"></span>
+                    {{ modeLabel }}
+                </span>
+            </div>
+        </div>
+
+        {% block cr_payment_gateway_details_footer %}
+        <div class="cr-gw__footer">
+            <span class="cr-gw__caption">{{ $tc('cr-payment-gateway.lastRefresh') }}: {{ lastRefresh }}</span>
+            <button type="button" class="cr-gw__refresh" :disabled="isLoading" @click="onRefresh">
+                <span class="cr-gw__refresh-icon" :class="{ 'cr-gw__refresh-icon--spin': isLoading }">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v4h4"/></svg>
+                </span>
+                {{ $tc('cr-payment-gateway.refresh') }}
+            </button>
+        </div>
+        {% endblock %}
+    </template>
+    {% endblock %}
+
+    {% block cr_payment_gateway_details_unavailable %}
+    <sw-alert v-else variant="info">
+        {{ $tc('cr-payment-gateway.detailsUnavailable') }}
+    </sw-alert>
+    {% endblock %}
+
+</div>
+{% endblock %}

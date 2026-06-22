@@ -1,0 +1,44 @@
+{
+    "name": "crehler/payment-bundle",
+    "description": "Crehler Payment Bundle - shared payment functionality for Polish payment providers",
+    "type": "shopware-bundle",
+    "license": "proprietary",
+    "version": "6.0.0",
+    "authors": [
+        {
+            "name": "Crehler Sp. z o. o.",
+            "email": "support@crehler.com",
+            "homepage": "https://crehler.com",
+            "role": "Owner"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Crehler\\PaymentBundle\\": "src/"
+        }
+    },
+    "extra": {
+        "shopware-bundle-name": "CrehlerPaymentBundle"
+    },
+    "require": {
+        "php": "~8.2.0 || ~8.3.0 || ~8.4.0 || ~8.5.0",
+        "shopware/core": "~6.6 || ~6.7",
+        "brick/phonenumber": "^0.8",
+        "defuse/php-encryption": "^2.3",
+        "symfony/lock": "^6.4 || ^7.0"
+    },
+    "require-dev": {
+        "rector/rector": "^2.4"
+    },
+    "archive": {
+        "exclude": [
+            "/tests",
+            "/docs",
+            "/.github",
+            "/.gitignore",
+            "/.php-cs-fixer.dist.php",
+            "/.php-cs-fixer.cache",
+            "/rector.php"
+        ]
+    }
+}

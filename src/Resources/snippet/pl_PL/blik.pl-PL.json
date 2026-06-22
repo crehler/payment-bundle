@@ -1,0 +1,30 @@
+{
+    "blik": {
+        "code": {
+            "placeholder": "Podaj kod BLIK",
+            "title": "Wprowadź kod BLIK",
+            "info": "Kod BLIK znajdziesz w aplikacji mobilnej swojego banku"
+        },
+        "payment": {
+            "edit": "Zmień metodę płatności",
+            "label": "Płatność BLIK",
+            "submit": "Zapłać",
+            "processing": "Przetwarzanie..."
+        },
+        "waiting": {
+            "title": "Potwierdź płatność w aplikacji",
+            "check": {
+                "phone": "Otwórz aplikację bankową i zaakceptuj płatność BLIK"
+            },
+            "timer": "Oczekiwanie na potwierdzenie...",
+            "help": "Nie zamykaj tej strony. Płatność zostanie automatycznie potwierdzona po zaakceptowaniu w aplikacji bankowej.",
+            "instruction": "Proszę potwierdzić płatność w swojej aplikacji bankowej",
+            "order_number": "Numer zamówienia",
+            "amount": "Kwota do zapłaty",
+            "time": "Masz 2 minuty na potwierdzenie płatności",
+            "back_to_shop": "Wróć do sklepu"
+        },
+        "success": "Płatność zakończona pomyślnie! Przekierowanie...",
+        "failed": "Płatność nie powiodła się"
+    }
+}

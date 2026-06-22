@@ -1,0 +1,73 @@
+{
+    "cr-payment-integration": {
+        "trailer": {
+            "kicker": "Payment integration",
+            "lead": "This payment integration is provided by",
+            "leadTail": "— your e-commerce partner.",
+            "sub": "Shopware 6 solutions, payment integrations and post-sale process automation."
+        }
+    },
+    "cr-payment-refund": {
+        "tab": {
+            "title": "Payment refunds"
+        },
+        "footer": "CREHLER · Payment refund module for Shopware 6",
+        "detail": {
+            "errorLoading": "Failed to load refund data. Please try again later.",
+            "noCapture": "No capture for this transaction yet. Refunds become available once the payment is settled.",
+            "noCaptureTitle": "No capture for this transaction",
+            "noCaptureText": "Refunds will become available once the payment is settled.",
+            "notSupportedTitle": "This payment method does not support refunds",
+            "notSupportedText": "The selected payment gateway does not support refunds from the admin yet. Issue the refund directly in the payment provider's panel."
+        },
+        "card": {
+            "title": "Payment refunds",
+            "totalAmount": "Total amount",
+            "refundedAmount": "Refunded",
+            "remainingAmount": "Remaining",
+            "newRefund": "New refund",
+            "fullyRefunded": "This order has been fully refunded"
+        },
+        "trailer": {
+            "kicker": "Refund engine",
+            "lead": "This refund module is provided by",
+            "leadTail": "— your e-commerce partner.",
+            "sub": "Shopware 6 solutions, payment integrations and post-sale process automation."
+        },
+        "modal": {
+            "title": "New refund",
+            "modeFull": "Full",
+            "modePartial": "Partial",
+            "modeLineItems": "By items",
+            "amount": "Refund amount",
+            "maxAvailable": "Up to {amount} available to refund.",
+            "colProduct": "Product",
+            "colQuantity": "Quantity",
+            "colAmount": "Amount",
+            "reasonCode": "Refund reason",
+            "reasonCodePlaceholder": "Select a reason…",
+            "reason": "Comment (stored in Shopware)",
+            "reasonPlaceholder": "Additional note for this refund (optional)…",
+            "effectiveAmount": "Amount to refund",
+            "brand": "Easy refunds",
+            "cancel": "Cancel",
+            "confirm": "Process refund"
+        },
+        "history": {
+            "title": "Refund history",
+            "countOne": "1 refund",
+            "countMany": "{count} refunds",
+            "createdAt": "Date",
+            "amount": "Amount",
+            "status": "Status",
+            "reason": "Reason",
+            "externalReference": "Gateway refund ID",
+            "emptyTitle": "No refunds",
+            "emptyText": "Completed refunds will appear here."
+        },
+        "refund": {
+            "success": "The refund has been processed.",
+            "error": "Failed to process the refund."
+        }
+    }
+}

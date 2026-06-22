@@ -1,0 +1,33 @@
+{
+  "payment": {
+    "consent": {
+      "dataProcessingTitle": "Informacja o przetwarzaniu danych osobowych"
+    },
+    "changeMethod": {
+      "notEditable": "Tego zamówienia nie można już edytować — płatność została zakończona lub jest w toku."
+    },
+    "checkoutConfirmChangeLabel": "Zmień bank",
+    "checkoutConfirmSelectedLabel": "Wybrany bank",
+    "checkoutConfirmCancelChangeLabel": "Anuluj zmianę banku",
+    "checkPayment": {
+      "waitingText": "Oczekiwanie na potwierdzenie płatności...",
+      "successText": "Płatność została potwierdzona",
+      "successSubtitle": "Dziękujemy! Za chwilę przejdziesz dalej.",
+      "failText": "Upłynął czas oczekiwania na płatność",
+      "failSubtitle": "Nie otrzymaliśmy potwierdzenia płatności na czas.",
+      "declinedText": "Płatność nie powiodła się",
+      "declinedSubtitle": "Twoja płatność została odrzucona lub anulowana.",
+      "changePaymentMethod": "Wybierz inną metodę i ponów płatność"
+    },
+    "transition": {
+      "title": "Przekierowanie do płatności",
+      "subtitle": "Za chwilę zostaniesz przekierowany do bezpiecznej strony płatności",
+      "redirecting": "Trwa przekierowanie...",
+      "help": "Nie zamykaj tej strony. Zostaniesz automatycznie przekierowany do operatora płatności.",
+      "countdown": "Przekierowanie za",
+      "second": "sekundę",
+      "seconds": "sekund",
+      "redirectingNow": "Przekierowanie..."
+    }
+  }
+}

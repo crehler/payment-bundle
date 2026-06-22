@@ -1,0 +1,83 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Crehler Payment Bundle - Check Payment Status",
+    "version": "1.0.0",
+    "description": "Store API endpoint for polling payment status. Used after initiating a payment (bank redirect, BLIK) to check whether the transaction has been confirmed by the payment gateway."
+  },
+  "paths": {
+    "/cr/payment/check": {
+      "post": {
+        "tags": ["Crehler Payment", "Payment Status"],
+        "summary": "Check payment status for an order",
+        "description": "Checks the current payment status for a given order. The endpoint performs a two-tier lookup:\n1. Queries the payment gateway API directly for real-time status (if supported by the provider)\n2. Falls back to Shopware's order transaction state machine\n\nDesigned for polling: call every 3 seconds for up to 120 seconds after payment initiation. Stop polling when status=true (paid) or when both status=false and waiting=false (failed).",
+        "operationId": "crehlerCheckPaymentStatus",
+        "security": [{ "ApiKey": [], "ContextToken": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckPaymentStatusRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Current payment status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckPaymentStatusResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Customer is not logged in and guest checkout is not enabled"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CheckPaymentStatusRequest": {
+        "type": "object",
+        "description": "Request to check payment status.",
+        "properties": {
+          "orderId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "UUID of the order to check payment status for."
+          }
+        },
+        "required": ["orderId"]
+      },
+      "CheckPaymentStatusResponse": {
+        "type": "object",
+        "description": "Payment status result. Three possible states:\n- status=true, waiting=false → Payment confirmed (stop polling, redirect to success page)\n- status=false, waiting=true → Payment pending (continue polling)\n- status=false, waiting=false → Payment failed (stop polling, show error)",
+        "properties": {
+          "status": {
+            "type": "boolean",
+            "description": "True if the payment has been confirmed as paid. False if still pending or failed."
+          },
+          "waiting": {
+            "type": "boolean",
+            "description": "True if the payment is still being processed (continue polling). False if the payment has reached a final state (paid or failed)."
+          },
+          "failed": {
+            "type": "boolean",
+            "description": "True if the payment reached a terminal non-paid state (cancelled, declined, failed, chargeback). Convenience flag equal to (status=false AND waiting=false); lets the storefront stop polling and show an error immediately instead of waiting for the timeout."
+          },
+          "apiAlias": {
+            "type": "string",
+            "example": "cr_payment_check_status_response"
+          }
+        },
+        "required": ["status", "waiting", "failed"]
+      }
+    }
+  }
+}

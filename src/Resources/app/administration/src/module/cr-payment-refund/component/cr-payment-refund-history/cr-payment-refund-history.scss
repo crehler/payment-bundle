@@ -1,0 +1,143 @@
+$cr-history-grid: 1.4fr 1fr 1.1fr 1.4fr 1.3fr;
+
+.cr-refund-history {
+    &__header {
+        gap: 12px;
+    }
+
+    &__count {
+        margin-left: auto;
+        font-size: 12px;
+        font-weight: 600;
+        color: #8A9BAD;
+    }
+
+    &__head {
+        display: grid;
+        grid-template-columns: $cr-history-grid;
+        gap: 16px;
+        padding: 14px 28px;
+        background: #FBFCFE;
+        border-bottom: 1px solid #EDF1F5;
+
+        span {
+            font-size: 12px;
+            font-weight: 700;
+            color: #52667A;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+    }
+
+    &__row {
+        display: grid;
+        grid-template-columns: $cr-history-grid;
+        gap: 16px;
+        align-items: center;
+        padding: 18px 28px;
+        border-bottom: 1px solid #F1F4F8;
+
+        &:last-child { border-bottom: none; }
+    }
+
+    &__date {
+        font-size: 14px;
+        font-weight: 500;
+        color: #1A232C;
+        font-variant-numeric: tabular-nums;
+    }
+
+    &__amount {
+        font-size: 14px;
+        font-weight: 600;
+        color: #1A232C;
+        font-variant-numeric: tabular-nums;
+    }
+
+    &__reason {
+        font-size: 14px;
+        font-weight: 500;
+        color: #52667A;
+    }
+
+    &__gateway {
+        font-size: 14px;
+        font-weight: 500;
+        color: #0870FF;
+        font-variant-numeric: tabular-nums;
+        font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+}
+
+// Status pill
+.cr-refund-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 11px;
+    border-radius: 99px;
+    font-size: 12.5px;
+    font-weight: 600;
+
+    &__dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    &--done {
+        background: #E8F7EE;
+        color: #15803D;
+        .cr-refund-pill__dot { background: #16A34A; }
+    }
+
+    &--progress {
+        background: #FFF7E6;
+        color: #B45309;
+        .cr-refund-pill__dot { background: #F59E0B; }
+    }
+
+    &--danger {
+        background: #FEECEC;
+        color: #B91C1C;
+        .cr-refund-pill__dot { background: #DC2626; }
+    }
+
+    &--neutral {
+        background: #EDF1F5;
+        color: #52667A;
+        .cr-refund-pill__dot { background: #8A9BAD; }
+    }
+}
+
+// Empty state
+.cr-refund-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 54px 28px;
+    text-align: center;
+
+    &__icon {
+        width: 46px;
+        height: 46px;
+        border-radius: 12px;
+        background: #F4F7FA;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    &__title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #52667A;
+    }
+
+    &__text {
+        font-size: 13px;
+        color: #8A9BAD;
+    }
+}

@@ -1,0 +1,41 @@
+name: Build & Release
+
+# Bundle-rdzeń (symfony-bundle) — dystrybuowany jako zależność composer,
+# nie jako wtyczka ze Store. Dlatego: tag + GitHub Release (auto release notes),
+# BEZ budowania ZIP.
+#
+# Uśpiony na repo źródłowym (guard niżej), aktywny tylko na mirrorze,
+# gdzie publish.yml force-pushuje kod na gałąź master.
+on:
+  push:
+    branches: [master]
+
+jobs:
+  release:
+    # Nie uruchamiaj na repo źródłowym — tylko na mirrorze (-release / publiczny).
+    if: github.repository != 'crehler-com/CrehlerPaymentBundle'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout (pełna historia)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Odczytaj wersję
+        id: version
+        run: echo "version=$(jq -r '.version' composer.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Tag + Release (jeśli wersja jeszcze nie wydana)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="v${{ steps.version.outputs.version }}"
+          if git rev-parse "$TAG" >/dev/null 2>&1 || gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG już istnieje — pomijam release."
+            exit 0
+          fi
+          git tag "$TAG"
+          git push origin "$TAG"
+          gh release create "$TAG" --title "$TAG" --generate-notes

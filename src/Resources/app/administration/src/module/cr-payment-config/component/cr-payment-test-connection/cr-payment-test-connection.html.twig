@@ -1,0 +1,17 @@
+{% block cr_payment_test_connection %}
+<div class="cr-test-connection">
+    <button
+        type="button"
+        class="cr-test-connection__btn"
+        :class="{ 'cr-test-connection__btn--loading': isLoading }"
+        :disabled="isLoading"
+        @click="onTest"
+    >
+        <span v-if="isLoading" class="cr-test-connection__spinner" aria-hidden="true"></span>
+        <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14M13 6l6 6-6 6"/>
+        </svg>
+        <span class="cr-test-connection__label">{{ buttonLabel }}</span>
+    </button>
+</div>
+{% endblock %}

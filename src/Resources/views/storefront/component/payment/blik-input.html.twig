@@ -1,0 +1,35 @@
+{% if page.order is defined and page.order.id is defined %}
+    {% set options = {
+        url: path('frontend.cr.payment.blik.order', { orderId: page.order.id }),
+        orderId: page.order.id,
+    } %}
+{% else %}
+    {% set options = {
+        url: path('frontend.cr.payment.blik'),
+    } %}
+{% endif %}
+
+<div class="crehler-blik-container" data-blik-payment data-blik-payment-options='{{ options|json_encode }}'>
+    <div class="crehler-blik-header">
+        <span class="crehler-blik-title">{{ 'blik.code.title'|trans|default('Wprowadz kod BLIK') }}</span>
+    </div>
+
+    <div class="crehler-blik-input-wrapper">
+        <input type="text"
+               name="crehlerBlikCode"
+               id="crehlerBlikCode"
+               class="crehler-blik-input"
+               placeholder="● ● ●   ● ● ●"
+               maxlength="7"
+               inputmode="numeric"
+               autocomplete="one-time-code"
+               data-blik-code-formatter="true">
+    </div>
+
+    <div class="crehler-blik-info">
+        {% sw_icon 'lock' style { size: 'xs' } %}
+        <span>{{ 'blik.code.info'|trans|default('Kod BLIK znajdziesz w aplikacji mobilnej swojego banku') }}</span>
+    </div>
+
+    <div class="crehler-blik-error" style="display: none;"></div>
+</div>

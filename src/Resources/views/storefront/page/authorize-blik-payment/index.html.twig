@@ -1,0 +1,590 @@
+{% sw_extends '@Storefront/storefront/base.html.twig' %}
+
+{% block base_content %}
+    {% set orderTransaction = page.extensions['order_transaction'] %}
+
+    {% set options = {
+        orderId: orderTransaction.order.id,
+        orderTransactionId: orderTransaction.id,
+        submitUrl: path('frontend.cr.payment.blik.order', { 'orderId': orderTransaction.order.id }),
+        failUrl: path('frontend.cr.payment.change-method', { 'orderId': orderTransaction.order.id }),
+        checkUrl: path('frontend.cr.payment.check'),
+        textSuccess: "blik.success"|trans|sw_sanitize,
+        textFailed: "blik.failed"|trans|sw_sanitize,
+        waitingTime: 120000,
+        redirectTo: target ?: path('frontend.checkout.finish.page', { 'orderId': orderTransaction.order.id })
+    }%}
+
+    <style>
+        .blik-auth-page {
+            min-height: 100vh;
+            background: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .blik-auth-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 2.5rem 2rem;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            position: relative;
+            animation: card-appear 0.3s ease-out;
+        }
+
+        @keyframes card-appear {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ============ INPUT PHASE ============ */
+        .blik-input-phase {
+            display: block;
+        }
+
+        .blik-input-phase.is-hidden {
+            display: none;
+        }
+
+        .blik-logo {
+            width: 80px;
+            height: auto;
+            margin-bottom: 1.5rem;
+        }
+
+        .blik-auth-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #212529;
+            margin-bottom: 0.5rem;
+        }
+
+        .blik-auth-subtitle {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-bottom: 1.5rem;
+        }
+
+        .blik-order-info {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        .blik-order-info-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.875rem;
+            color: #495057;
+        }
+
+        .blik-order-info-row + .blik-order-info-row {
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid #dee2e6;
+        }
+
+        .blik-order-info-value {
+            font-weight: 600;
+            color: #212529;
+        }
+
+        .blik-code-input-wrapper {
+            margin-bottom: 1rem;
+        }
+
+        .blik-code-input {
+            width: 100%;
+            padding: 16px 20px;
+            font-size: 28px;
+            font-weight: 600;
+            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+            letter-spacing: 12px;
+            text-align: center;
+            background: #fff;
+            border: 2px solid #ced4da;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .blik-code-input::placeholder {
+            color: #dee2e6;
+            letter-spacing: 4px;
+            font-size: 18px;
+        }
+
+        .blik-code-input:focus {
+            border-color: #e6007a;
+            box-shadow: 0 0 0 3px rgba(230, 0, 122, 0.15);
+        }
+
+        .blik-submit-btn {
+            width: 100%;
+            padding: 1rem;
+            background: #e6007a;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+
+        .blik-submit-btn:hover:not(:disabled) {
+            background: #cc006c;
+            transform: translateY(-1px);
+        }
+
+        .blik-submit-btn:disabled {
+            background: #adb5bd;
+            cursor: not-allowed;
+        }
+
+        .blik-code-hint {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: 1rem;
+        }
+
+        .blik-error-message {
+            display: none;
+            margin-top: 1rem;
+            padding: 0.75rem 1rem;
+            background: #f8d7da;
+            border: 1px solid #f5c2c7;
+            border-radius: 6px;
+            color: #842029;
+            font-size: 0.875rem;
+        }
+
+        .blik-error-message.is-visible {
+            display: block;
+        }
+
+        /* ============ WAITING PHASE ============ */
+        .blik-waiting-phase {
+            display: none;
+        }
+
+        .blik-waiting-phase.is-visible {
+            display: block;
+        }
+
+        .blik-phone-container {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 1.5rem;
+        }
+
+        .blik-phone-bg {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            animation: pulse-ring 2s ease-in-out infinite;
+        }
+
+        .blik-phone-bg::before {
+            content: '';
+            position: absolute;
+            inset: -12px;
+            border-radius: 50%;
+            border: 2px solid rgba(102, 126, 234, 0.3);
+            animation: ripple 2s ease-out infinite;
+        }
+
+        @keyframes pulse-ring {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes ripple {
+            0% { transform: scale(0.8); opacity: 1; }
+            100% { transform: scale(1.4); opacity: 0; }
+        }
+
+        .blik-phone-icon {
+            position: absolute;
+            inset: 12px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .blik-phone-icon svg {
+            width: 40px;
+            height: 40px;
+            color: #667eea;
+            animation: phone-shake 1.5s ease-in-out infinite;
+        }
+
+        @keyframes phone-shake {
+            0%, 100% { transform: rotate(-5deg); }
+            50% { transform: rotate(5deg); }
+        }
+
+        .blik-notification-dot {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 20px;
+            height: 20px;
+            background: #ff6b6b;
+            border-radius: 50%;
+            border: 3px solid white;
+            animation: notification-bounce 1s ease-in-out infinite;
+        }
+
+        @keyframes notification-bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        .blik-timer {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: #f8f9fa;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: #495057;
+            margin-bottom: 1rem;
+        }
+
+        .blik-timer-icon {
+            width: 16px;
+            height: 16px;
+            animation: rotate 2s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .blik-progress {
+            height: 4px;
+            background: #e9ecef;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+
+        .blik-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 100%;
+            animation: progress-countdown 120s linear forwards;
+        }
+
+        @keyframes progress-countdown {
+            from { width: 100%; }
+            to { width: 0%; }
+        }
+
+        .blik-help-text {
+            font-size: 0.8rem;
+            color: #6c757d;
+            line-height: 1.5;
+        }
+
+        .blik-edit-btn {
+            display: none;
+            margin-top: 1rem;
+            padding: 0.75rem 1.5rem;
+            background: transparent;
+            color: #667eea;
+            border: 1px solid #667eea;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .blik-edit-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        /* Success/Error states */
+        .blik-waiting-phase.is-success .blik-phone-bg {
+            background: linear-gradient(135deg, #51cf66 0%, #37b24d 100%);
+            animation: none;
+        }
+
+        .blik-waiting-phase.is-success .blik-phone-icon svg {
+            animation: none;
+            color: #37b24d;
+        }
+
+        .blik-waiting-phase.is-error .blik-phone-bg {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
+            animation: none;
+        }
+
+        .blik-waiting-phase.is-error .blik-phone-bg::before {
+            animation: none;
+            opacity: 0;
+        }
+
+        .blik-waiting-phase.is-error .blik-phone-icon svg {
+            animation: none;
+            color: #ee5a5a;
+        }
+
+        .blik-waiting-phase.is-error .blik-notification-dot {
+            display: none;
+        }
+
+        .blik-waiting-phase.is-error .blik-edit-btn {
+            display: inline-block;
+        }
+
+        @media (max-width: 480px) {
+            .blik-auth-card {
+                padding: 1.5rem;
+            }
+
+            .blik-code-input {
+                font-size: 24px;
+                letter-spacing: 8px;
+            }
+        }
+    </style>
+
+    <div class="blik-auth-page" data-blik-authorize="true"
+         data-blik-authorize-options='{{ options|json_encode }}'>
+        <div class="blik-auth-card">
+            {# ============ INPUT PHASE ============ #}
+            <div class="blik-input-phase" data-blik-input-phase>
+                <img src="{{ asset('icons/blik.svg', '@CrehlerPaymentBundle') }}" alt="BLIK" class="blik-logo" onerror="this.style.display='none'">
+
+                <h1 class="blik-auth-title">{{ 'blik.code.title'|trans|default('Wprowadź kod BLIK') }}</h1>
+                <p class="blik-auth-subtitle">{{ 'blik.code.info'|trans|default('Kod znajdziesz w aplikacji mobilnej banku') }}</p>
+
+                <div class="blik-order-info">
+                    <div class="blik-order-info-row">
+                        <span>{{ 'blik.waiting.order_number'|trans|default('Numer zamówienia') }}:</span>
+                        <span class="blik-order-info-value">{{ orderTransaction.order.orderNumber }}</span>
+                    </div>
+                    <div class="blik-order-info-row">
+                        <span>{{ 'blik.waiting.amount'|trans|default('Kwota') }}:</span>
+                        <span class="blik-order-info-value">{{ orderTransaction.order.amountTotal|currency(orderTransaction.order.currency.isoCode) }}</span>
+                    </div>
+                </div>
+
+                <div class="blik-code-input-wrapper">
+                    <input type="text"
+                           id="blikCodeInput"
+                           class="blik-code-input"
+                           placeholder="● ● ●   ● ● ●"
+                           maxlength="7"
+                           inputmode="numeric"
+                           autocomplete="one-time-code"
+                           data-blik-code-formatter="true">
+                </div>
+
+                <button type="button" class="blik-submit-btn" data-blik-submit disabled>
+                    {{ 'blik.payment.submit'|trans|default('Zapłać') }}
+                </button>
+
+                <p class="blik-code-hint">
+                    {{ 'blik.waiting.time'|trans|default('Masz 2 minuty na potwierdzenie płatności') }}
+                </p>
+
+                <div class="blik-error-message" data-blik-error></div>
+            </div>
+
+            {# ============ WAITING PHASE ============ #}
+            <div class="blik-waiting-phase" data-blik-waiting-phase>
+                <div class="blik-phone-container">
+                    <div class="blik-phone-bg"></div>
+                    <div class="blik-notification-dot"></div>
+                    <div class="blik-phone-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                            <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                        </svg>
+                    </div>
+                </div>
+
+                <h2 class="blik-auth-title">{{ 'blik.waiting.title'|trans|default('Potwierdź płatność w aplikacji') }}</h2>
+                <p class="blik-auth-subtitle">{{ 'blik.waiting.check.phone'|trans|default('Otwórz aplikację bankową i zaakceptuj płatność BLIK') }}</p>
+
+                <div class="blik-timer">
+                    <svg class="blik-timer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    <span>{{ 'blik.waiting.timer'|trans|default('Oczekiwanie na potwierdzenie...') }}</span>
+                </div>
+
+                <div class="blik-progress">
+                    <div class="blik-progress-bar"></div>
+                </div>
+
+                <p class="blik-help-text">
+                    {{ 'blik.waiting.help'|trans|default('Nie zamykaj tej strony. Płatność zostanie automatycznie potwierdzona.') }}
+                </p>
+
+                <a href="{{ options.failUrl }}" class="blik-edit-btn">
+                    {{ 'blik.payment.edit'|trans|default('Zmień metodę płatności') }}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const options = {{ options|json_encode|raw }};
+        const inputPhase = document.querySelector('[data-blik-input-phase]');
+        const waitingPhase = document.querySelector('[data-blik-waiting-phase]');
+        const codeInput = document.getElementById('blikCodeInput');
+        const submitBtn = document.querySelector('[data-blik-submit]');
+        const errorEl = document.querySelector('[data-blik-error]');
+
+        // Checkout BLIK flow: the code was already entered and authorized at the gateway
+        // before this redirect (authorized=1). Skip the code-entry phase and poll the payment
+        // status directly — no re-prompt, and no double-submit via the retry route.
+        if ({{ authorized|default(false) ? 'true' : 'false' }}) {
+            inputPhase.classList.add('is-hidden');
+            waitingPhase.classList.add('is-visible');
+            startStatusCheck();
+            return;
+        }
+
+        // Format BLIK code (add space after 3 digits)
+        codeInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/[^\d]/g, '');
+            if (value.length > 3) {
+                value = value.slice(0, 3) + ' ' + value.slice(3, 6);
+            }
+            e.target.value = value;
+            submitBtn.disabled = value.replace(/\s/g, '').length !== 6;
+        });
+
+        // Submit BLIK code
+        submitBtn.addEventListener('click', async function() {
+            const code = codeInput.value.replace(/\s/g, '');
+            if (code.length !== 6) return;
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = '{{ "blik.payment.processing"|trans|default("Przetwarzanie...") }}';
+            errorEl.classList.remove('is-visible');
+
+            try {
+                const response = await fetch(options.submitUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        blikCode: code,
+                        orderId: options.orderId
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success || response.ok) {
+                    // Switch to waiting phase
+                    inputPhase.classList.add('is-hidden');
+                    waitingPhase.classList.add('is-visible');
+                    startStatusCheck();
+                } else {
+                    throw new Error(result.message || '{{ "blik.failed"|trans|default("Płatność nie powiodła się") }}');
+                }
+            } catch (error) {
+                errorEl.textContent = error.message;
+                errorEl.classList.add('is-visible');
+                submitBtn.disabled = false;
+                submitBtn.textContent = '{{ "blik.payment.submit"|trans|default("Zapłać") }}';
+            }
+        });
+
+        // Check payment status
+        function startStatusCheck() {
+            let busy = false;     // a request is in flight — don't start another
+            let stopped = false;  // a terminal state was reached — ignore late ticks
+
+            const finish = (cssClass) => {
+                stopped = true;
+                clearInterval(checkInterval);
+                clearTimeout(timeoutTimer);
+                waitingPhase.classList.add(cssClass);
+            };
+
+            const checkInterval = setInterval(async () => {
+                // Serialize: never fire a new check until the previous one resolved.
+                if (busy || stopped) {
+                    return;
+                }
+                busy = true;
+                try {
+                    const response = await fetch(options.checkUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ orderId: options.orderId })
+                    });
+
+                    const result = await response.json();
+                    if (stopped) {
+                        return;
+                    }
+
+                    if (result.status === true) {
+                        finish('is-success');
+                        setTimeout(() => {
+                            if (options.redirectTo) {
+                                window.location.href = options.redirectTo;
+                            }
+                        }, 1500);
+                    } else if (result.failed === true) {
+                        finish('is-error');
+                    }
+                } catch (e) {
+                    console.error('Status check failed:', e);
+                } finally {
+                    busy = false;
+                }
+            }, 3000);
+
+            // Timeout after waiting time
+            const timeoutTimer = setTimeout(() => {
+                if (stopped) {
+                    return;
+                }
+                clearInterval(checkInterval);
+                if (!waitingPhase.classList.contains('is-success')) {
+                    waitingPhase.classList.add('is-error');
+                }
+            }, options.waitingTime);
+        }
+    });
+    </script>
+{% endblock %}

@@ -1,0 +1,73 @@
+{
+    "cr-payment-integration": {
+        "trailer": {
+            "kicker": "Integracja płatności",
+            "lead": "Tę integrację płatności dostarczyła firma",
+            "leadTail": "— Twój partner w przestrzeni e-commerce.",
+            "sub": "Rozwiązania Shopware 6, integracje płatności i automatyzacja procesów posprzedażowych."
+        }
+    },
+    "cr-payment-refund": {
+        "tab": {
+            "title": "Zwroty płatności"
+        },
+        "footer": "CREHLER · Moduł zwrotów płatności dla Shopware 6",
+        "detail": {
+            "errorLoading": "Nie udało się pobrać danych zwrotów. Spróbuj ponownie później.",
+            "noCapture": "Brak rozliczenia (capture) dla tej transakcji. Zwroty będą dostępne po zaksięgowaniu płatności.",
+            "noCaptureTitle": "Brak rozliczenia (capture) dla tej transakcji",
+            "noCaptureText": "Zwroty będą dostępne po zaksięgowaniu płatności.",
+            "notSupportedTitle": "Ta metoda płatności nie obsługuje zwrotów",
+            "notSupportedText": "Wybrana bramka płatności nie obsługuje jeszcze zwrotów z poziomu panelu. Zwrot wykonaj bezpośrednio w panelu operatora płatności."
+        },
+        "card": {
+            "title": "Zwroty płatności",
+            "totalAmount": "Kwota całkowita",
+            "refundedAmount": "Zwrócono",
+            "remainingAmount": "Pozostało",
+            "newRefund": "Nowy zwrot",
+            "fullyRefunded": "Zamówienie zostało w pełni zwrócone"
+        },
+        "trailer": {
+            "kicker": "Mechanizm zwrotów",
+            "lead": "Ten moduł zwrotów dostarczyła firma",
+            "leadTail": "— Twój partner w przestrzeni e-commerce.",
+            "sub": "Rozwiązania Shopware 6, integracje płatności i automatyzacja procesów posprzedażowych."
+        },
+        "modal": {
+            "title": "Nowy zwrot",
+            "modeFull": "Całość",
+            "modePartial": "Częściowy",
+            "modeLineItems": "Wg pozycji",
+            "amount": "Kwota zwrotu",
+            "maxAvailable": "Maksymalnie {amount} dostępne do zwrotu.",
+            "colProduct": "Produkt",
+            "colQuantity": "Ilość",
+            "colAmount": "Kwota",
+            "reasonCode": "Powód zwrotu",
+            "reasonCodePlaceholder": "Wybierz powód…",
+            "reason": "Komentarz (zapisywany w Shopware)",
+            "reasonPlaceholder": "Dodatkowy komentarz do zwrotu (opcjonalnie)…",
+            "effectiveAmount": "Kwota do zwrotu",
+            "brand": "Łatwe zwroty",
+            "cancel": "Anuluj",
+            "confirm": "Wykonaj zwrot"
+        },
+        "history": {
+            "title": "Historia zwrotów",
+            "countOne": "1 zwrot",
+            "countMany": "{count} zwrotów",
+            "createdAt": "Data",
+            "amount": "Kwota",
+            "status": "Status",
+            "reason": "Powód",
+            "externalReference": "ID zwrotu w bramce",
+            "emptyTitle": "Brak zwrotów",
+            "emptyText": "Wykonane zwroty pojawią się w tym miejscu."
+        },
+        "refund": {
+            "success": "Zwrot został przetworzony.",
+            "error": "Nie udało się przetworzyć zwrotu."
+        }
+    }
+}

@@ -1,0 +1,51 @@
+{% block cr_payment_refund_card %}
+<cr-payment-refund-shell :title="$tc('cr-payment-refund.card.title')">
+
+    {% block cr_payment_refund_card_actions %}
+    <template #actions>
+        <span v-if="isFullyRefunded" class="cr-refund-fully">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            {{ $tc('cr-payment-refund.card.fullyRefunded') }}
+        </span>
+        <button
+            type="button"
+            class="cr-refund-newbtn"
+            :disabled="isNewRefundDisabled"
+            @click="onOpenModal"
+        >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            {{ $tc('cr-payment-refund.card.newRefund') }}
+        </button>
+    </template>
+    {% endblock %}
+
+    {% block cr_payment_refund_card_stats %}
+    <div class="cr-refund-stats">
+        <div class="cr-refund-stats__cell">
+            <div class="cr-refund-stats__label">{{ $tc('cr-payment-refund.card.totalAmount') }}</div>
+            <div class="cr-refund-stats__value">{{ currencyFilter(totalAmount, currencyIsoCode) }}</div>
+        </div>
+        <div class="cr-refund-stats__cell">
+            <div class="cr-refund-stats__label">{{ $tc('cr-payment-refund.card.refundedAmount') }}</div>
+            <div class="cr-refund-stats__value cr-refund-stats__value--refunded">{{ currencyFilter(refundedAmount, currencyIsoCode) }}</div>
+        </div>
+        <div class="cr-refund-stats__cell">
+            <div class="cr-refund-stats__label">{{ $tc('cr-payment-refund.card.remainingAmount') }}</div>
+            <div class="cr-refund-stats__value" :class="{ 'cr-refund-stats__value--done': isFullyRefunded }">{{ currencyFilter(remainingAmount, currencyIsoCode) }}</div>
+        </div>
+    </div>
+    {% endblock %}
+
+    {% block cr_payment_refund_card_modal %}
+    <cr-payment-refund-modal
+        v-if="showModal"
+        :order="order"
+        :remaining-amount="remainingAmount"
+        :reasons="refundReasons"
+        :reason-required="refundReasonRequired"
+        @submit="onSubmitRefund"
+        @close="onCloseModal"
+    />
+    {% endblock %}
+</cr-payment-refund-shell>
+{% endblock %}

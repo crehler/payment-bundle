@@ -1,0 +1,60 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Crehler Payment Bundle - Customer Sub-Method Selection",
+    "version": "1.0.0",
+    "description": "Store API endpoint for reading the customer's selected payment sub-method (e.g. which bank they chose for online transfer). Setting the sub-method is done through the standard context switch (PATCH /store-api/context with a `paymentSubMethod` field) — mirroring the native paymentMethodId. There is no dedicated write endpoint."
+  },
+  "paths": {
+    "/customer/cr/payment-sub-method": {
+      "get": {
+        "tags": ["Crehler Payment", "Customer Sub-Method"],
+        "summary": "Get customer's selected sub-method",
+        "description": "Returns the customer's currently selected payment sub-method. Resolved from the session first, then from the customer's account. Used to pre-select the previously chosen bank or e-wallet in the UI.",
+        "operationId": "crehlerCustomerSubMethodGet",
+        "security": [{ "ApiKey": [], "ContextToken": [] }],
+        "responses": {
+          "200": {
+            "description": "Customer's selected payment sub-method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerSubMethodResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Customer is not logged in"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CustomerSubMethodResponse": {
+        "type": "object",
+        "description": "Customer's currently selected payment sub-method.",
+        "properties": {
+          "paymentMethodId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "UUID of the payment method."
+          },
+          "subPaymentMethodId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Provider-specific identifier of the selected sub-method (e.g. bank ID). Null if no sub-method has been selected.",
+            "example": "ai"
+          },
+          "apiAlias": {
+            "type": "string",
+            "example": "cr_payment_customer_sub_method_response"
+          }
+        },
+        "required": ["paymentMethodId"]
+      }
+    }
+  }
+}

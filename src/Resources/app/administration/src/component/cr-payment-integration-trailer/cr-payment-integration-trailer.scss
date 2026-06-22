@@ -1,0 +1,123 @@
+// ── Parent override ──────────────────────────────────────────────────────────
+// The decorator injects this trailer as its own title-less config card, which the
+// admin renders as an <mt-card>. That card paints its own frame (1px border, raised
+// background, content padding) on top of the trailer's rounded border → a visible
+// double frame. Neutralise just the wrapping card — scoped via :has() so the sibling
+// "Display settings" card keeps its frame — and drop the content padding so the
+// trailer's banner is the only frame. The compound selector outweighs Meteor's
+// scoped `.mt-card[data-v-*]` rules (both 0,2,0) so the reset wins.
+.sw-system-config .mt-card:has(.cr-payment-trailer) {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+
+    .mt-card__content {
+        padding: 0;
+    }
+}
+
+// Standalone, fully self-rounded variant of the CREHLER trailer for the plugin
+// configuration form (the refund-screen variant is a border-top strip inside a tile).
+.cr-payment-trailer {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 20px 28px;
+    background: linear-gradient(105deg, #FFF6F0 0%, #FFFBF8 60%, #fff 100%);
+    border: 1px solid #FCE6D6;
+    border-radius: 12px;
+    overflow: hidden;
+    font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif;
+    color: #1A232C;
+
+    * { box-sizing: border-box; }
+
+    &__bar {
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: linear-gradient(180deg, #FF5C00, #FF8A3D);
+    }
+
+    &__icon {
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 56px;
+        height: 56px;
+        border-radius: 13px;
+        background: #fff;
+        border: 1px solid #FCE0CC;
+        box-shadow: 0 4px 14px -6px rgba(255, 92, 0, .35);
+    }
+
+    &__body {
+        flex: 1;
+        min-width: 0;
+    }
+
+    &__eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 5px;
+        flex-wrap: wrap;
+    }
+
+    &__kicker {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #FF5C00;
+    }
+
+    &__logo {
+        display: block;
+        width: auto;
+        height: 15px;
+    }
+
+    &__lead {
+        font-size: 14px;
+        font-weight: 600;
+        color: #1A232C;
+        line-height: 1.5;
+    }
+
+    &__accent { color: #FF5C00; }
+
+    &__sub {
+        font-size: 12.5px;
+        font-weight: 500;
+        color: #7B6B5E;
+        margin-top: 2px;
+    }
+
+    &__link {
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 9px 15px;
+        border-radius: 9px;
+        background: #fff;
+        border: 1px solid #FCD3B5;
+        color: #FF5C00;
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+        white-space: nowrap;
+        transition: background .15s ease, border-color .15s ease;
+
+        &:hover {
+            background: #FFF1E8;
+            border-color: #FFB57F;
+        }
+    }
+}

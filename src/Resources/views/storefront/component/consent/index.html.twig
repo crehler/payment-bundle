@@ -1,0 +1,32 @@
+{% set consent = page.extensions[constant('Crehler\\PaymentBundle\\Infrastructure\\Struct\\CheckoutConfirmPageExtensionStruct::API_ALIAS')].consent %}
+
+{% if consent.requiresAcceptance %}
+    {# Acceptance consent (e.g. gateway regulations): a required checkbox. #}
+    <div class="form-check">
+        <input type="checkbox"
+               class="checkout-confirm-tos-checkbox form-check-input"
+               id="consent"
+               name="consent"
+               required="required"
+               form="confirmOrderForm">
+
+        <label class="checkout-confirm-tos-label custom-control-label" for="consent">
+            {# content carries the acceptance text + provider regulations link (trusted,
+               set in the provider's ConsentProvider). Fall back to the title. #}
+            {{ (consent.content ?: consent.title)|raw }}
+        </label>
+    </div>
+{% else %}
+    {# Informational disclosure (e.g. GDPR data-processing notice): must be shown,
+       not ticked. Rendered collapsed so it doesn't swamp the checkout. #}
+    <div class="cr-payment-consent-info">
+        <details class="cr-payment-consent-details">
+            <summary class="cr-payment-consent-summary">
+                {{ consent.title|default("payment.consent.dataProcessingTitle"|trans)|raw }}
+            </summary>
+            <div class="cr-payment-consent-body text-muted small mt-2">
+                {{ consent.content|raw }}
+            </div>
+        </details>
+    </div>
+{% endif %}

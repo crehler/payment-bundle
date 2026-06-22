@@ -1,0 +1,32 @@
+{
+    "cr-payment-gateway": {
+        "title": "Szczegóły płatności (bramka)",
+        "errorLoading": "Nie udało się pobrać danych płatności z bramki. Spróbuj ponownie później.",
+        "noTransaction": "Brak transakcji w bramce dla tego zamówienia.",
+        "copy": "Kopiuj ID",
+        "refresh": "Odśwież",
+        "lastRefresh": "Ostatnie odświeżenie",
+        "row": {
+            "operator": "Operator",
+            "id": "ID transakcji",
+            "status": "Status (bramka)",
+            "method": "Metoda",
+            "amount": "Kwota",
+            "created": "Data utworzenia",
+            "title": "Tytuł",
+            "mode": "Tryb"
+        },
+        "badge": {
+            "paid": "Opłacona",
+            "pending": "Oczekuje",
+            "failed": "Nieudana",
+            "refunded": "Zwrócona",
+            "unknown": "Nieznany"
+        },
+        "mode": {
+            "production": "Produkcyjny",
+            "sandbox": "Sandbox"
+        },
+        "detailsUnavailable": "Nie udało się pobrać szczegółów transakcji z bramki."
+    }
+}

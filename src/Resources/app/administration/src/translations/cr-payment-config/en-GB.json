@@ -1,0 +1,10 @@
+{
+    "cr-payment-config": {
+        "test": {
+            "buttonLive": "Test production credentials",
+            "buttonSandbox": "Test sandbox credentials",
+            "success": "Gateway connection works — the credentials are valid.",
+            "error": "Could not connect to the gateway. Please check the credentials."
+        }
+    }
+}

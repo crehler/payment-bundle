@@ -1,0 +1,51 @@
+// Generic centered "state" body for the refund shell (no-capture, errors, …).
+// The tile chrome (.cr-refund-tile) and trailer (.cr-refund-trailer) styles live
+// in cr-payment-refund-card.scss and are reused here.
+.cr-refund-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 14px;
+    padding: 64px 28px;
+
+    &__icon {
+        width: 72px;
+        height: 72px;
+        border-radius: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+
+        svg {
+            width: 34px;
+            height: 34px;
+        }
+
+        &--warning {
+            background: #FEF1E1;
+            color: #F08C00;
+        }
+
+        &--info {
+            background: #EAF3FF;
+            color: #0870FF;
+        }
+    }
+
+    &__title {
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        color: #1A232C;
+    }
+
+    &__text {
+        font-size: 14px;
+        font-weight: 500;
+        color: #8A9BAD;
+        line-height: 1.55;
+        max-width: 460px;
+    }
+}

@@ -1,0 +1,22 @@
+.cr-refund-screen {
+    min-height: 100%;
+    font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif;
+    color: #1A232C;
+    -webkit-font-smoothing: antialiased;
+    padding: 40px 24px 80px;
+
+    * { box-sizing: border-box; }
+
+    &__inner {
+        max-width: 1040px;
+        margin: 0 auto;
+    }
+
+    &__footer {
+        text-align: center;
+        margin-top: 26px;
+        font-size: 12px;
+        color: #A6B3C2;
+        font-weight: 500;
+    }
+}

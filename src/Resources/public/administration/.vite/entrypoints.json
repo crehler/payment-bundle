@@ -1,0 +1,25 @@
+{
+  "base": "/bundles/crehlerpayment/administration/",
+  "entryPoints": {
+    "crehler-payment-bundle": {
+      "css": [
+        "/bundles/crehlerpayment/administration/css/crehler-payment-bundle.css"
+      ],
+      "dynamic": [],
+      "js": [
+        "/bundles/crehlerpayment/administration/js/crehler-payment-bundle.js"
+      ],
+      "legacy": false,
+      "preload": []
+    }
+  },
+  "legacy": false,
+  "metadatas": {},
+  "version": [
+    "7.0.4",
+    7,
+    0,
+    4
+  ],
+  "viteServer": null
+}

@@ -1,0 +1,415 @@
+// Payment Sub-Methods - CSS Variables
+:root {
+  --payment-submethod-border: #e5e7eb;
+  --payment-submethod-border-hover: #9ca3af;
+  --payment-submethod-border-selected: #3b82f6;
+  --payment-submethod-glow: rgba(59, 130, 246, 0.4);
+  --payment-submethod-bg: #ffffff;
+  --payment-submethod-bg-hover: #f9fafb;
+  --payment-submethod-transition: 0.2s ease;
+  --payment-submethod-radius: 8px;
+}
+
+// Animations
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 0 3px var(--payment-submethod-glow); }
+  50% { box-shadow: 0 0 0 5px var(--payment-submethod-glow); }
+}
+
+// Main Container States
+.payment-sub-methods {
+  &:not(.payment-sub-methods--has-value) {
+    .payment-sub-methods-selected {
+      display: none;
+    }
+
+    .payment-sub-methods-selected-change-label {
+      display: none;
+    }
+
+    .payment-sub-methods-selected-change {
+      .icon svg {
+        transform: rotate(180deg);
+      }
+    }
+  }
+}
+
+.payment-sub-methods--has-value {
+  .payment-sub-methods-options {
+    display: none;
+  }
+
+  .payment-sub-methods-cancel-change-label {
+    display: none;
+  }
+}
+
+// Grid Layout - Responsive 4 columns
+.payment-sub-methods-options {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+  grid-template-columns: repeat(1, 1fr);
+
+  @media (min-width: 480px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+// Individual Payment Method Card
+.payment-sub-method {
+  position: relative;
+  background: var(--payment-submethod-bg);
+  border: 1px solid var(--payment-submethod-border);
+  padding: 12px 8px;
+  border-radius: var(--payment-submethod-radius);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition:
+    transform var(--payment-submethod-transition),
+    box-shadow var(--payment-submethod-transition),
+    border-color var(--payment-submethod-transition),
+    background-color var(--payment-submethod-transition);
+  min-height: 70px;
+
+  // Hover state - Scale + Shadow
+  &:hover {
+    transform: scale(1.05);
+    border-color: var(--payment-submethod-border-hover);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    background: var(--payment-submethod-bg-hover);
+    z-index: 1;
+  }
+
+  // Active/pressed state
+  &:active {
+    transform: scale(1.02);
+  }
+
+  // Selected state - Glow effect
+  &.is-selected {
+    border-color: var(--payment-submethod-border-selected);
+    box-shadow: 0 0 0 3px var(--payment-submethod-glow);
+    animation: pulse 0.4s ease;
+
+    &:hover {
+      box-shadow: 0 0 0 3px var(--payment-submethod-glow), 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+  }
+
+  // Image styling
+  img {
+    max-width: 100%;
+    max-height: 50px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    transition: opacity var(--payment-submethod-transition);
+  }
+}
+
+// Hidden radio input
+.payment-sub-method-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+
+  // Focus state for accessibility
+  &:focus + .payment-sub-method-label {
+    outline: 2px solid var(--payment-submethod-border-selected);
+    outline-offset: 2px;
+  }
+
+  // Checked state triggers parent styling
+  &:checked ~ .payment-sub-method-label {
+    // Styles handled by .is-selected class added via JS
+  }
+}
+
+// Label styling
+.payment-sub-method-label {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  margin: 0;
+}
+
+.payment-sub-method-label-image {
+  cursor: pointer;
+}
+
+.payment-sub-method-label-name {
+  display: none;
+}
+
+// Selected Bank Display
+.payment-sub-methods-selected {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  margin-top: 16px;
+  background: var(--payment-submethod-bg-hover);
+  border: 1px solid var(--payment-submethod-border);
+  border-radius: var(--payment-submethod-radius);
+  animation: fadeSlideIn 0.3s ease;
+
+  // Readonly state - single option, no change possible
+  &--readonly {
+    animation: none;
+    flex-direction: row;
+    align-items: center;
+    padding: 12px 16px;
+  }
+}
+
+.payment-sub-methods-selected-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.payment-sub-methods-selected-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6b7280;
+  margin: 0;
+}
+
+.payment-sub-methods-selected-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.payment-sub-methods-selected-image-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  background: var(--payment-submethod-bg);
+  border: 1px solid var(--payment-submethod-border);
+  border-radius: 6px;
+}
+
+.payment-sub-methods-selected-image {
+  max-width: 80px;
+  max-height: 40px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+.payment-sub-methods-selected-name {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #1f2937;
+}
+
+// Change Button - Pill style
+.payment-sub-methods-selected-change {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  margin-top: 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #4b5563;
+  background: transparent;
+  border: 1px solid var(--payment-submethod-border);
+  border-radius: 20px;
+  cursor: pointer;
+  transition:
+    background-color var(--payment-submethod-transition),
+    border-color var(--payment-submethod-transition),
+    color var(--payment-submethod-transition);
+
+  &:hover {
+    background: var(--payment-submethod-bg);
+    border-color: var(--payment-submethod-border-hover);
+    color: #1f2937;
+  }
+
+  .icon {
+    display: flex;
+    align-items: center;
+
+    svg {
+      width: 14px;
+      height: 14px;
+      transition: transform 0.3s ease;
+    }
+  }
+}
+
+// Payment Transition/Loading State
+.payment-transition {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  padding: 2rem;
+  text-align: center;
+
+  .payment-logo {
+    margin-bottom: 2rem;
+
+    img {
+      max-width: 200px;
+      height: auto;
+    }
+  }
+
+  .payment-animation {
+    margin: 2rem 0;
+  }
+}
+
+// ============================================
+// BLIK Code Input Styles
+// ============================================
+
+.crehler-blik-container {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 20px;
+  margin-top: 12px;
+  max-width: 320px;
+}
+
+.crehler-blik-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.crehler-blik-logo {
+  height: 24px;
+  width: auto;
+}
+
+.crehler-blik-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #495057;
+}
+
+.crehler-blik-input-wrapper {
+  position: relative;
+}
+
+.crehler-blik-input {
+  width: 100%;
+  padding: 16px 20px;
+  font-size: 28px;
+  font-weight: 600;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Consolas', monospace;
+  letter-spacing: 12px;
+  text-align: center;
+  background: #fff;
+  border: 2px solid #ced4da;
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+  &::placeholder {
+    color: #dee2e6;
+    letter-spacing: 4px;
+    font-size: 18px;
+  }
+
+  &:focus {
+    border-color: #e6007a; // BLIK pink color
+    box-shadow: 0 0 0 3px rgba(230, 0, 122, 0.15);
+  }
+
+  &:valid:not(:placeholder-shown) {
+    border-color: #198754;
+    box-shadow: 0 0 0 3px rgba(25, 135, 84, 0.15);
+  }
+
+  // Hide spinner for number inputs
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  -moz-appearance: textfield;
+}
+
+.crehler-blik-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 12px;
+  font-size: 12px;
+  color: #6c757d;
+
+  .icon {
+    display: flex;
+    align-items: center;
+
+    svg {
+      width: 14px;
+      height: 14px;
+    }
+  }
+}
+
+.crehler-blik-error {
+  display: none;
+  margin-top: 12px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #842029;
+  background: #f8d7da;
+  border: 1px solid #f5c2c7;
+  border-radius: 6px;
+  text-align: center;
+}
+
+// External card form wrapper
+.crehler-external-card-form {
+  margin-top: 20px;
+  animation: fadeSlideIn 0.3s ease-out;
+}

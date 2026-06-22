@@ -1,0 +1,320 @@
+{% sw_extends '@Storefront/storefront/base.html.twig' %}
+
+{% block base_content %}
+    <style>
+        .payment-transition-page {
+            min-height: 100vh;
+            background: #fff;
+        }
+
+        .payment-transition-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 1050;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .payment-transition-card {
+            background: #fff;
+            border-radius: 24px;
+            padding: 3rem 2.5rem;
+            max-width: 420px;
+            width: 100%;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.25);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            z-index: 1051;
+            animation: card-appear 0.3s ease-out;
+        }
+
+        @keyframes card-appear {
+            from {
+                opacity: 0;
+                transform: scale(0.95) translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .payment-transition-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
+            background-size: 200% 100%;
+            animation: gradient-shift 2s ease infinite;
+        }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .payment-icon-container {
+            position: relative;
+            width: 140px;
+            height: 140px;
+            margin: 0 auto 2rem;
+        }
+
+        .payment-icon-bg {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            animation: pulse-ring 2s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite;
+        }
+
+        .payment-icon-bg::before,
+        .payment-icon-bg::after {
+            content: '';
+            position: absolute;
+            inset: -15px;
+            border-radius: 50%;
+            border: 2px solid rgba(102, 126, 234, 0.3);
+            animation: ripple 2s ease-out infinite;
+        }
+
+        .payment-icon-bg::after {
+            inset: -30px;
+            animation-delay: 0.5s;
+        }
+
+        @keyframes pulse-ring {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+        }
+
+        @keyframes ripple {
+            0% { transform: scale(0.8); opacity: 1; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+
+        .payment-icon-inner {
+            position: absolute;
+            inset: 15px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
+            z-index: 1;
+        }
+
+        .payment-icon-inner svg {
+            width: 50px;
+            height: 50px;
+            color: #667eea;
+        }
+
+        .payment-provider-logo {
+            max-width: 80px;
+            max-height: 50px;
+            object-fit: contain;
+        }
+
+        .payment-transition-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 0.75rem;
+            line-height: 1.3;
+        }
+
+        .payment-transition-subtitle {
+            font-size: 1rem;
+            color: #6c757d;
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+        }
+
+        .payment-timer {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 50px;
+            font-size: 0.9rem;
+            color: #495057;
+            margin-bottom: 1.5rem;
+        }
+
+        .payment-timer-icon {
+            width: 18px;
+            height: 18px;
+            animation: rotate 2s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .payment-progress {
+            height: 6px;
+            background: #e9ecef;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+        }
+
+        .payment-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 3px;
+            width: 0%;
+            animation: progress-fill 3s ease-out forwards;
+        }
+
+        @keyframes progress-fill {
+            from { width: 0%; }
+            to { width: 100%; }
+        }
+
+        .payment-help-text {
+            font-size: 0.85rem;
+            color: #868e96;
+            line-height: 1.6;
+        }
+
+        .payment-help-text strong {
+            color: #495057;
+        }
+
+        .payment-countdown-text {
+            font-size: 0.9rem;
+            color: #495057;
+            margin-top: 1rem;
+        }
+
+        .payment-countdown-text span {
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        /* Hidden elements for GA tracking */
+        .finish-ordernumber {
+            display: none;
+        }
+
+        .hidden-line-items-information {
+            display: none;
+        }
+
+        @media (max-width: 480px) {
+            .payment-transition-card {
+                padding: 2rem 1.5rem;
+                border-radius: 20px;
+            }
+
+            .payment-icon-container {
+                width: 120px;
+                height: 120px;
+            }
+
+            .payment-transition-title {
+                font-size: 1.25rem;
+            }
+        }
+    </style>
+
+    <div class="payment-transition-page">
+        <div class="payment-transition-backdrop">
+            <div class="payment-transition-card">
+                <div class="payment-icon-container">
+                    <div class="payment-icon-bg"></div>
+                    <div class="payment-icon-inner">
+                        {% if providerLogo == 'paynow' %}
+                            <img src="{{ asset('icons/paynow_bank.png', '@CrehlerPayNowPayment') }}" alt="PayNow" class="payment-provider-logo">
+                        {% elseif providerLogo == 'payu' %}
+                            <img src="{{ asset('icons/payu_logo.jpg', '@CrehlerPayUPayment') }}" alt="PayU" class="payment-provider-logo">
+                        {% else %}
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                                <line x1="1" y1="10" x2="23" y2="10"></line>
+                            </svg>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <h1 class="payment-transition-title">{{ 'payment.transition.title'|trans|sw_sanitize }}</h1>
+                <p class="payment-transition-subtitle">{{ 'payment.transition.subtitle'|trans|sw_sanitize }}</p>
+
+                <div class="payment-timer">
+                    <svg class="payment-timer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    <span>{{ 'payment.transition.redirecting'|trans|sw_sanitize }}</span>
+                </div>
+
+                <div class="payment-progress">
+                    <div class="payment-progress-bar"></div>
+                </div>
+
+                <p class="payment-help-text">
+                    {{ 'payment.transition.help'|trans|sw_sanitize }}
+                </p>
+
+                <div class="payment-countdown-text"></div>
+            </div>
+        </div>
+
+        {# Hidden elements for Shopware GA tracking #}
+        {% if page and page.order is defined %}
+            <p class="finish-ordernumber" data-order-number="{{ page.order.orderNumber }}"></p>
+
+            {# Line items for GA tracking #}
+            <div class="hidden-line-items-information">
+                {% for lineItem in page.order.lineItems %}
+                    <div class="hidden-line-item"
+                         data-id="{{ lineItem.payload.productNumber|default(lineItem.identifier) }}"
+                         data-name="{{ lineItem.label }}"
+                         data-quantity="{{ lineItem.quantity }}"
+                         data-price="{{ lineItem.unitPrice }}">
+                    </div>
+                {% endfor %}
+                <div class="hidden-transaction-value" data-value="{{ page.order.amountTotal }}"></div>
+                <div class="hidden-transaction-shipping" data-shipping="{{ page.order.shippingTotal }}"></div>
+                <div class="hidden-transaction-tax" data-tax="{{ page.order.amountTotal - page.order.amountNet }}"></div>
+            </div>
+        {% endif %}
+    </div>
+
+    <script>
+        (function() {
+            var countdown = 3;
+            var countdownEl = document.querySelector('.payment-countdown-text');
+            var target = '{{ target|e('js') }}';
+
+            function updateCountdown() {
+                if (countdown > 0) {
+                    var secondWord = countdown === 1 ? '{{ "payment.transition.second"|trans }}' : '{{ "payment.transition.seconds"|trans }}';
+                    countdownEl.innerHTML = '{{ "payment.transition.countdown"|trans }} <span>' + countdown + '</span> ' + secondWord + '...';
+                    countdown--;
+                    setTimeout(updateCountdown, 1000);
+                } else {
+                    countdownEl.innerHTML = '{{ "payment.transition.redirectingNow"|trans }}';
+                    setTimeout(function() {
+                        window.location.href = target;
+                    }, 300);
+                }
+            }
+
+            updateCountdown();
+        })();
+    </script>
+{% endblock %}

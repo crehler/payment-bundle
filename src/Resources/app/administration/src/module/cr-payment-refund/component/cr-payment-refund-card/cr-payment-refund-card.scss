@@ -1,0 +1,220 @@
+// Shared tile chrome (used by summary + history tiles).
+.cr-refund-tile {
+    background: #fff;
+    border: 1px solid #E4E9F0;
+    border-radius: 14px;
+    box-shadow: 0 1px 2px rgba(26, 35, 44, .04), 0 8px 24px -16px rgba(26, 35, 44, .12);
+    overflow: hidden;
+
+    * { box-sizing: border-box; }
+
+    &__header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 22px 28px;
+        border-bottom: 1px solid #EDF1F5;
+    }
+
+    &__title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+
+        h2 {
+            margin: 0;
+            font-size: 19px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: #1A232C;
+        }
+    }
+
+    &__icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 9px;
+        background: #EAF3FF;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    &__header-actions {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+}
+
+.cr-refund-tile--summary { margin-bottom: 24px; }
+
+// "Fully refunded" inline note
+.cr-refund-fully {
+    font-size: 13px;
+    font-weight: 500;
+    color: #8A9BAD;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+// New refund button
+.cr-refund-newbtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 22px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    border: 1px solid #0870FF;
+    background: #0870FF;
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(8, 112, 255, .4);
+    transition: all .15s ease;
+
+    &:hover:not(:disabled) {
+        background: #0A62CC;
+        border-color: #0A62CC;
+        box-shadow: 0 4px 14px -4px rgba(8, 112, 255, .5);
+    }
+
+    &:disabled {
+        border-color: #E4E9F0;
+        background: #EDF1F5;
+        color: #A6B3C2;
+        cursor: not-allowed;
+        box-shadow: none;
+    }
+}
+
+// Stat strip (3 cells with hairline dividers via 1px gap)
+.cr-refund-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: #EDF1F5;
+
+    &__cell {
+        background: #fff;
+        padding: 22px 28px;
+    }
+
+    &__label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #8A9BAD;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-bottom: 8px;
+    }
+
+    &__value {
+        font-size: 24px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        font-variant-numeric: tabular-nums;
+        color: #1A232C;
+
+        &--refunded { color: #0870FF; }
+        &--done { color: #16A34A; }
+    }
+}
+
+// CREHLER partner trailer
+.cr-refund-trailer {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 20px 28px;
+    background: linear-gradient(105deg, #FFF6F0 0%, #FFFBF8 60%, #fff 100%);
+    border-top: 1px solid #FCE6D6;
+
+    &__bar {
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: linear-gradient(180deg, #FF5C00, #FF8A3D);
+    }
+
+    &__icon {
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 56px;
+        height: 56px;
+        border-radius: 13px;
+        background: #fff;
+        border: 1px solid #FCE0CC;
+        box-shadow: 0 4px 14px -6px rgba(255, 92, 0, .35);
+    }
+
+    &__body {
+        flex: 1;
+        min-width: 0;
+    }
+
+    &__eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 5px;
+        flex-wrap: wrap;
+    }
+
+    &__kicker {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #FF5C00;
+    }
+
+    &__lead {
+        font-size: 14px;
+        font-weight: 600;
+        color: #1A232C;
+        line-height: 1.5;
+    }
+
+    &__accent { color: #FF5C00; }
+
+    &__sub {
+        font-size: 12.5px;
+        font-weight: 500;
+        color: #7B6B5E;
+        margin-top: 2px;
+    }
+
+    &__link {
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 9px 15px;
+        border-radius: 9px;
+        background: #fff;
+        border: 1px solid #FCD3B5;
+        color: #FF5C00;
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+        white-space: nowrap;
+        transition: background .15s ease, border-color .15s ease;
+
+        &:hover {
+            background: #FFF1E8;
+            border-color: #FFB57F;
+        }
+    }
+}
+
+.cr-refund-logo--trailer { height: 15px; }

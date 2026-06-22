@@ -1,0 +1,74 @@
+{#
+  Shared saved-card dropdown selector markup.
+
+  Pairs with the cr-saved-card-selector storefront plugin (data attributes below).
+  The PROVIDER template owns the [data-saved-card-selector] wrapper element and the
+  hidden [data-saved-card-token] input; this partial renders only the dropdown UI so
+  every gateway stops re-implementing the same markup.
+
+  Params:
+    savedCards        (SavedCardCollection)  required — cards to list
+    wrapperClass      (string)  provider styling hook, default 'cr-saved-cards'
+    labelText         (string)  optional dropdown label (omitted when empty)
+    labelClass        (string)  label class, default 'cr-saved-cards-label'
+    placeholderText   (string)  text shown when nothing is selected
+    placeholderIcon   (string)  sw_icon for the toggle, default 'credit-card'
+    showNewCardOption (bool)    render a "use new card" reset entry, default false
+    newCardText       (string)  label for that entry
+    newCardClass      (string)  extra class for that entry, default ''
+    showExpiry        (bool)    show 'brand masked (mm/yyyy)' instead of masked only, default false
+#}
+{% set wrapperClass = wrapperClass|default('cr-saved-cards') %}
+{% set labelClass = labelClass|default('cr-saved-cards-label') %}
+{% set placeholderIcon = placeholderIcon|default('credit-card') %}
+
+<div class="{{ wrapperClass }}">
+    {% if labelText|default('') is not empty %}
+        <label class="{{ labelClass }}">{{ labelText }}</label>
+    {% endif %}
+    <div class="dropdown">
+        <button type="button"
+                class="btn dropdown-toggle cr-dropdown-toggle"
+                data-saved-card-toggle
+                data-bs-toggle="dropdown"
+                aria-expanded="false">
+            <div class="saved-card-display">
+                {% sw_icon placeholderIcon style { size: 'sm' } %}
+                <span class="saved-card-placeholder" data-saved-card-placeholder>{{ placeholderText }}</span>
+                <span class="saved-card-selected" data-saved-card-display style="display: none;"></span>
+            </div>
+        </button>
+        <ul class="dropdown-menu">
+            {% if showNewCardOption|default(false) %}
+                <li>
+                    <button type="button"
+                            class="dropdown-item cr-dropdown-item {{ newCardClass|default('') }}"
+                            data-saved-card-item
+                            data-token="">
+                        {% sw_icon 'plus' style { size: 'xs' } %}
+                        <span>{{ newCardText }}</span>
+                    </button>
+                </li>
+            {% endif %}
+            {% for savedCard in savedCards %}
+                <li>
+                    <button type="button"
+                            class="dropdown-item cr-dropdown-item"
+                            data-saved-card-item
+                            data-token="{{ savedCard.token }}"
+                            data-masked-card-number="{{ savedCard.cardNumberMasked }}"
+                            data-brand-img-url="{{ savedCard.brandImgUrl }}">
+                        {% if savedCard.brandImgUrl %}
+                            <img src="{{ savedCard.brandImgUrl }}" alt="{{ savedCard.cardNumberMasked }}">
+                        {% endif %}
+                        {% if showExpiry|default(false) %}
+                            <span>{{ savedCard.cardBrand }} {{ savedCard.cardNumberMasked }} ({{ savedCard.expirationMonth }}/{{ savedCard.expirationYear }})</span>
+                        {% else %}
+                            <span>{{ savedCard.cardNumberMasked }}</span>
+                        {% endif %}
+                    </button>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>

@@ -1,0 +1,30 @@
+{
+    "blik": {
+        "code": {
+            "placeholder": "Enter BLIK code",
+            "title": "Enter BLIK code",
+            "info": "You can find the BLIK code in your bank's mobile app"
+        },
+        "payment": {
+            "edit": "Change payment method",
+            "label": "BLIK Payment",
+            "submit": "Pay",
+            "processing": "Processing..."
+        },
+        "waiting": {
+            "title": "Confirm payment in your app",
+            "check": {
+                "phone": "Open your banking app and accept the BLIK payment"
+            },
+            "timer": "Waiting for confirmation...",
+            "help": "Don't close this page. Payment will be automatically confirmed after you accept it in your banking app.",
+            "instruction": "Please confirm the payment in your banking application",
+            "order_number": "Order number",
+            "amount": "Amount to pay",
+            "time": "You have 2 minutes to confirm the payment",
+            "back_to_shop": "Back to shop"
+        },
+        "success": "Payment completed successfully! Redirecting...",
+        "failed": "Payment failed"
+    }
+}

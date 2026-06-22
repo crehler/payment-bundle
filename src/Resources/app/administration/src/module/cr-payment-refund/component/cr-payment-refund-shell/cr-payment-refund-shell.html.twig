@@ -1,0 +1,45 @@
+{% block cr_payment_refund_shell %}
+<div class="cr-refund-tile cr-refund-tile--summary cr-refund-shell">
+
+    {% block cr_payment_refund_shell_header %}
+    <div class="cr-refund-tile__header">
+        <div class="cr-refund-tile__title">
+            <span class="cr-refund-tile__icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0870FF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v4h4"/></svg>
+            </span>
+            <h2>{{ title }}</h2>
+        </div>
+        <div v-if="$slots.actions" class="cr-refund-tile__header-actions">
+            <slot name="actions"></slot>
+        </div>
+    </div>
+    {% endblock %}
+
+    {% block cr_payment_refund_shell_body %}
+    <slot></slot>
+    {% endblock %}
+
+    {% block cr_payment_refund_shell_trailer %}
+    <div class="cr-refund-trailer">
+        <div class="cr-refund-trailer__bar"></div>
+        <div class="cr-refund-trailer__icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FF5C00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+        </div>
+        <div class="cr-refund-trailer__body">
+            <div class="cr-refund-trailer__eyebrow">
+                <span class="cr-refund-trailer__kicker">{{ $tc('cr-payment-refund.trailer.kicker') }}</span>
+                <img class="cr-refund-logo cr-refund-logo--trailer" src="/bundles/crehlerpayment/img/crehler-logo.svg" alt="CREHLER" />
+            </div>
+            <div class="cr-refund-trailer__lead">
+                {{ $tc('cr-payment-refund.trailer.lead') }} <span class="cr-refund-trailer__accent">CREHLER</span> {{ $tc('cr-payment-refund.trailer.leadTail') }}
+            </div>
+            <div class="cr-refund-trailer__sub">{{ $tc('cr-payment-refund.trailer.sub') }}</div>
+        </div>
+        <a class="cr-refund-trailer__link" href="https://crehler.com" target="_blank" rel="noopener noreferrer">
+            crehler.com
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg>
+        </a>
+    </div>
+    {% endblock %}
+</div>
+{% endblock %}

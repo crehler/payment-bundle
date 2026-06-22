@@ -1,0 +1,54 @@
+{% set paymentMethod = context.paymentMethod %}
+
+{# BLIK is no longer excluded: with the in-checkout BLIK flow it also lands on
+   /checkout/finish (already authorized), so it should get the same confirmation
+   block (logo + spinner→checkmark) as bank/card. The immediate status check
+   resolves to the success state right away for an already-paid order. #}
+{% if paymentMethodName in paymentMethod.technicalName|lower
+    and 'crehler' in paymentMethod.formattedHandlerIdentifier|lower
+%}
+
+{% set checkPaymentOptions = {
+     orderId: page.order.id,
+     failUrl: path('frontend.cr.payment.change-method', { 'orderId': page.order.id }),
+     checkUrl: path('frontend.cr.payment.check'),
+     textSuccess: "payment.checkPayment.successText"|trans|sw_sanitize,
+     subtitleSuccess: "payment.checkPayment.successSubtitle"|trans|sw_sanitize,
+     textTimeout: "payment.checkPayment.failText"|trans|sw_sanitize,
+     subtitleTimeout: "payment.checkPayment.failSubtitle"|trans|sw_sanitize,
+     textDeclined: "payment.checkPayment.declinedText"|trans|sw_sanitize,
+     subtitleDeclined: "payment.checkPayment.declinedSubtitle"|trans|sw_sanitize,
+} %}
+
+    {# waitingTime: config('CrehlerPayNowPayment.config.waitingTime') trzeba zrobić wspólny config dla wszystkich wtyczek#}
+<div data-crehler-check-payment="true"
+     data-crehler-check-payment-options='{{ checkPaymentOptions|json_encode }}'>
+
+    <div data-info="true" class="text-center py-4">
+        <img src="{{ imgPath }}" alt="{{ altImg|raw }}" class="mb-4" style="max-width: 220px; height: auto;">
+
+        <div class="mb-3">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">{{ "payment.checkPayment.waitingText"|trans|sw_sanitize }}</span>
+            </div>
+            <div class="check d-none text-success">
+                {% sw_icon 'checkmark-circle' style { 'size': 'lg' } %}
+            </div>
+            <div data-error-icon class="d-none text-danger">
+                {% sw_icon 'x-circle' style { 'size': 'lg' } %}
+            </div>
+        </div>
+
+        <h2 class="h4" data-title>{{ "payment.checkPayment.waitingText"|trans|sw_sanitize }}</h2>
+        <p class="text-muted" data-subtitle></p>
+
+        <div class="redirect-countdown text-muted small mb-3" style="display: none;"></div>
+
+        <div id="editPayment" class="d-none mt-3">
+            <a href="{{ checkPaymentOptions.failUrl }}" class="btn btn-primary">
+                {{ "payment.checkPayment.changePaymentMethod"|trans|sw_sanitize }}
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}

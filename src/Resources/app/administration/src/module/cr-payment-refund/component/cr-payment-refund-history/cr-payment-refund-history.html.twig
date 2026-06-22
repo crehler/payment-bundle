@@ -1,0 +1,53 @@
+{% block cr_payment_refund_history %}
+<div class="cr-refund-tile cr-refund-history">
+
+    {% block cr_payment_refund_history_header %}
+    <div class="cr-refund-tile__header cr-refund-history__header">
+        <span class="cr-refund-tile__icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0870FF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>
+        </span>
+        <h2>{{ $tc('cr-payment-refund.history.title') }}</h2>
+        <span class="cr-refund-history__count">{{ historyCountLabel }}</span>
+    </div>
+    {% endblock %}
+
+    {% block cr_payment_refund_history_table %}
+    <div class="cr-refund-history__head">
+        <span>{{ $tc('cr-payment-refund.history.createdAt') }}</span>
+        <span>{{ $tc('cr-payment-refund.history.amount') }}</span>
+        <span>{{ $tc('cr-payment-refund.history.status') }}</span>
+        <span>{{ $tc('cr-payment-refund.history.reason') }}</span>
+        <span>{{ $tc('cr-payment-refund.history.externalReference') }}</span>
+    </div>
+
+    <template v-if="hasRefunds">
+        <div
+            v-for="refund in refunds"
+            :key="refund.id"
+            class="cr-refund-history__row"
+        >
+            <span class="cr-refund-history__date">{{ refund.createdAt ? dateFilter(refund.createdAt) : '-' }}</span>
+            <span class="cr-refund-history__amount">{{ currencyFilter(refund.amount ? refund.amount.totalPrice : 0, currencyIsoCode) }}</span>
+            <span>
+                <span class="cr-refund-pill" :class="'cr-refund-pill--' + statusVariant(refund)">
+                    <span class="cr-refund-pill__dot"></span>
+                    {{ stateLabel(refund) }}
+                </span>
+            </span>
+            <span class="cr-refund-history__reason">{{ refund.reason || '–' }}</span>
+            <span class="cr-refund-history__gateway">{{ refund.externalReference || '–' }}</span>
+        </div>
+    </template>
+    {% endblock %}
+
+    {% block cr_payment_refund_history_empty %}
+    <div v-if="!hasRefunds" class="cr-refund-empty">
+        <div class="cr-refund-empty__icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#B6C2CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/></svg>
+        </div>
+        <div class="cr-refund-empty__title">{{ $tc('cr-payment-refund.history.emptyTitle') }}</div>
+        <div class="cr-refund-empty__text">{{ $tc('cr-payment-refund.history.emptyText') }}</div>
+    </div>
+    {% endblock %}
+</div>
+{% endblock %}

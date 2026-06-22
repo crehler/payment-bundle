@@ -1,0 +1,38 @@
+imports:
+  - {resource: 'packages/monolog.yaml'}
+  - {resource: 'packages/shopware.yaml'}
+
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+
+  Crehler\PaymentBundle\:
+    resource: '../../../src/'
+
+  Crehler\PaymentBundle\Infrastructure\StoreApi\CheckPaymentStatus\AbstractCheckPaymentStatusRoute:
+    alias: 'Crehler\PaymentBundle\Infrastructure\StoreApi\CheckPaymentStatus\CheckPaymentStatusRoute'
+
+  Crehler\PaymentBundle\Shared\EnhancedLogger:
+    public: true
+    arguments:
+      $decoratedLogger: '@monolog.logger.payment_bundle'
+
+  # Shared encrypted card-token storage. The card-encryption key is a dedicated,
+  # auto-generated defuse key kept in the PRIVATE filesystem (never in the DB, where
+  # gateway credentials already live), so a DB-only leak yields unusable ciphertext.
+  # No merchant .env action — works for ZIP installs.
+  Crehler\PaymentBundle\Application\Service\StoredCardService:
+    arguments:
+      $privateFilesystem: '@shopware.filesystem.private'
+      $lockFactory: '@lock.factory'
+
+  # EntityExtension for PaymentMethod - adds crPaymentType runtime field
+  Crehler\PaymentBundle\Infrastructure\Extension\PaymentMethodExtension:
+    tags:
+      - { name: shopware.entity.extension }
+
+  # Subscriber to populate crPaymentType runtime field
+  Crehler\PaymentBundle\Infrastructure\Subscriber\PaymentMethodTypeSubscriber:
+    tags:
+      - { name: kernel.event_subscriber }

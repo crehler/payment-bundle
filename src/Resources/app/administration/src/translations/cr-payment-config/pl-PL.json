@@ -1,0 +1,10 @@
+{
+    "cr-payment-config": {
+        "test": {
+            "buttonLive": "Testuj dane produkcyjne",
+            "buttonSandbox": "Testuj dane sandbox",
+            "success": "Połączenie z bramką działa — dane są poprawne.",
+            "error": "Nie udało się połączyć z bramką. Sprawdź dane dostępowe."
+        }
+    }
+}

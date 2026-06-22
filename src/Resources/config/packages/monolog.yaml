@@ -1,0 +1,11 @@
+monolog:
+    channels: ['payment_bundle']
+    handlers:
+        payment_bundle:
+            type: rotating_file
+            path: '%kernel.logs_dir%/payment_bundle_%kernel.environment%.log'
+            # Keep payment logs at notice+ so transient debug/info data (tokens,
+            # payloads) never lands on disk in production. Override per-env if needed.
+            level: notice
+            channels: ['payment_bundle']
+            max_files: 7

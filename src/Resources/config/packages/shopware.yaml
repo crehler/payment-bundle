@@ -1,0 +1,15 @@
+shopware:
+    api:
+        rate_limiter:
+            # Throttle BLIK code submission (store-api + storefront proxy). BLIK codes
+            # are 6 digits and short-lived; without a cap an attacker could guess codes
+            # and spam order creation. Keyed per sales-channel session in the routes.
+            cr_blik_payment:
+                enabled: true
+                policy: 'time_backoff'
+                reset: '24 hours'
+                limits:
+                    - limit: 5
+                      interval: '60 seconds'
+                    - limit: 10
+                      interval: '300 seconds'

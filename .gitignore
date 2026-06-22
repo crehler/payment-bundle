@@ -1,0 +1,38 @@
+# Dependencies
+/tests/store-api/node_modules/
+/tests/storefront/node_modules/
+/vendor/
+
+# Environment files
+/tests/store-api/.env
+/tests/store-api/.env.local
+/tests/store-api/.env.*.local
+/tests/storefront/.env
+/tests/storefront/.env.local
+/tests/storefront/.env.*.local
+
+# Playwright
+/tests/storefront/test-results/
+/tests/storefront/playwright-report/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Cache
+.php-cs-fixer.cache
+
+# Build artifacts. Compiled admin (Vite) output IS committed so that a
+# production deploy is `composer install` + `assets:install` with no Node
+# on the server. Storefront (webpack) dist stays ignored (built at shop level).
+/src/Resources/app/storefront/dist/
+
+# Local agent/session dirs
+.claude/
+.creon/

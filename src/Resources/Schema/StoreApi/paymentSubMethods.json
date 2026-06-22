@@ -1,0 +1,144 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Crehler Payment Bundle - Payment Sub-Methods",
+    "version": "1.0.0",
+    "description": "Store API endpoints for retrieving payment sub-methods (e.g. bank list for online transfers, e-wallet options)."
+  },
+  "paths": {
+    "/cr/payment-sub-methods/{paymentId}": {
+      "get": {
+        "tags": ["Crehler Payment", "Sub-Methods"],
+        "summary": "Get sub-methods for a payment method",
+        "description": "Returns available sub-methods (e.g. banks, e-wallets) for the given payment method ID. Sub-methods represent concrete payment options within a payment method type. Results can be filtered by payment value to exclude options outside their amount limits.",
+        "operationId": "crehlerPaymentSubMethodsGet",
+        "security": [{ "ApiKey": [] }],
+        "parameters": [
+          {
+            "name": "paymentId",
+            "in": "path",
+            "required": true,
+            "description": "UUID of the payment method to get sub-methods for.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "paymentValue",
+            "in": "query",
+            "required": false,
+            "description": "Payment amount in minor units (e.g. cents/grosze). Used to filter sub-methods by their min/max amount limits. Defaults to 10000 (100.00).",
+            "schema": {
+              "type": "integer",
+              "default": 10000
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of available sub-methods for the given payment method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentSubMethodsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cr/payment-sub-methods": {
+      "get": {
+        "tags": ["Crehler Payment", "Sub-Methods"],
+        "summary": "Get sub-methods for current payment method",
+        "description": "Returns available sub-methods for the payment method currently set in the sales channel context. Equivalent to calling the {paymentId} variant with the context's active payment method.",
+        "operationId": "crehlerPaymentSubMethodsCurrent",
+        "security": [{ "ApiKey": [] }],
+        "parameters": [
+          {
+            "name": "paymentValue",
+            "in": "query",
+            "required": false,
+            "description": "Payment amount in minor units (e.g. cents/grosze). Used to filter sub-methods by their min/max amount limits. Defaults to 10000 (100.00).",
+            "schema": {
+              "type": "integer",
+              "default": 10000
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of available sub-methods for the current payment method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentSubMethodsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "PaymentSubMethodsResponse": {
+        "type": "object",
+        "description": "Collection of payment sub-methods.",
+        "properties": {
+          "elements": {
+            "type": "array",
+            "description": "List of available payment sub-methods.",
+            "items": {
+              "$ref": "#/components/schemas/PaymentSubMethodStruct"
+            }
+          },
+          "apiAlias": {
+            "type": "string",
+            "example": "cr_payment_sub_method_response"
+          }
+        }
+      },
+      "PaymentSubMethodStruct": {
+        "type": "object",
+        "description": "A single payment sub-method (e.g. a specific bank or e-wallet).",
+        "properties": {
+          "providerId": {
+            "type": "string",
+            "description": "Provider-specific identifier for this sub-method. Used when saving the customer's selection via the customer sub-method endpoint.",
+            "example": "ai"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable display name of the sub-method.",
+            "example": "Bank Żubra"
+          },
+          "shopwareId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "UUID of the parent Shopware payment method this sub-method belongs to."
+          },
+          "mediaUrl": {
+            "type": "string",
+            "description": "URL to the sub-method's icon or logo image.",
+            "example": "/bundles/fakecrehlerpayment/icons/bank.svg"
+          },
+          "minAmount": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Minimum transaction amount in minor units for this sub-method. Null means no minimum."
+          },
+          "maxAmount": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Maximum transaction amount in minor units for this sub-method. Null means no maximum."
+          }
+        },
+        "required": ["providerId", "name", "shopwareId", "mediaUrl"]
+      }
+    }
+  }
+}

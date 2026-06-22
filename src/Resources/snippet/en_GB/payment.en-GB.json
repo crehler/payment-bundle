@@ -1,0 +1,33 @@
+{
+  "payment": {
+    "consent": {
+      "dataProcessingTitle": "Personal data processing notice"
+    },
+    "changeMethod": {
+      "notEditable": "This order can no longer be edited — the payment is already completed or in progress."
+    },
+    "checkoutConfirmChangeLabel": "Change bank",
+    "checkoutConfirmSelectedLabel": "Selected bank",
+    "checkoutConfirmCancelChangeLabel": "Cancel bank change",
+    "checkPayment": {
+      "waitingText": "Waiting for payment confirmation...",
+      "successText": "Payment has been confirmed",
+      "successSubtitle": "Thank you! You'll be redirected in a moment.",
+      "failText": "Payment waiting time has expired",
+      "failSubtitle": "We did not receive payment confirmation in time.",
+      "declinedText": "Payment failed",
+      "declinedSubtitle": "Your payment was declined or cancelled.",
+      "changePaymentMethod": "Choose another method and retry payment"
+    },
+    "transition": {
+      "title": "Redirecting to payment",
+      "subtitle": "You will be redirected to a secure payment page shortly",
+      "redirecting": "Redirecting...",
+      "help": "Do not close this page. You will be automatically redirected to the payment operator.",
+      "countdown": "Redirecting in",
+      "second": "second",
+      "seconds": "seconds",
+      "redirectingNow": "Redirecting..."
+    }
+  }
+}

@@ -1,0 +1,442 @@
+@keyframes crRefundOverlayIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes crRefundDialogIn {
+    from { opacity: 0; transform: translateY(14px) scale(.985); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.cr-refund-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1050;
+    background: rgba(26, 35, 44, .45);
+    backdrop-filter: blur(2px);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 56px 20px;
+    overflow-y: auto;
+    animation: crRefundOverlayIn .18s ease;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: #1A232C;
+    -webkit-font-smoothing: antialiased;
+
+    * { box-sizing: border-box; }
+}
+
+.cr-refund-dialog {
+    width: 100%;
+    max-width: 680px;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 24px 70px -20px rgba(26, 35, 44, .5);
+    overflow: hidden;
+    animation: crRefundDialogIn .26s cubic-bezier(.2, .9, .25, 1);
+
+    &__header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 22px 28px;
+        border-bottom: 1px solid #EDF1F5;
+    }
+
+    &__title {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        color: #1A232C;
+    }
+
+    &__close {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        border: 1px solid transparent;
+        background: transparent;
+        cursor: pointer;
+        color: #52667A;
+        transition: background .15s ease, color .15s ease;
+
+        &:hover {
+            background: #F4F7FA;
+            color: #1A232C;
+        }
+    }
+
+    &__body {
+        padding: 24px 28px;
+        background: #F8FAFC;
+    }
+
+    &__summary {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 20px;
+        padding-top: 18px;
+        border-top: 1px solid #E4E9F0;
+    }
+
+    &__summary-label {
+        font-size: 16px;
+        font-weight: 700;
+        color: #1A232C;
+    }
+
+    &__summary-value {
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        color: #0870FF;
+        font-variant-numeric: tabular-nums;
+
+        &.is-muted { color: #A6B3C2; }
+        &.is-error { color: #DC2626; }
+    }
+
+    &__footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 18px 28px;
+        border-top: 1px solid #EDF1F5;
+        background: #fff;
+    }
+
+    &__brand {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        font-weight: 500;
+        color: #A6B3C2;
+    }
+
+    &__actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+}
+
+.cr-refund-logo {
+    display: block;
+    width: auto;
+
+    &--footer { height: 13px; opacity: .9; }
+}
+
+// --- Segmented tabs ------------------------------------------------------
+.cr-refund-tabs {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 22px;
+
+    &__group {
+        display: inline-flex;
+        gap: 6px;
+        padding: 5px;
+        background: #EDF1F5;
+        border-radius: 11px;
+    }
+}
+
+.cr-refund-tab {
+    padding: 9px 18px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: #52667A;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all .15s ease;
+
+    &:disabled {
+        opacity: .5;
+        cursor: not-allowed;
+    }
+
+    &--active {
+        background: #0870FF;
+        color: #fff;
+        box-shadow: 0 1px 3px rgba(8, 112, 255, .4);
+    }
+}
+
+// --- Blocks / labels -----------------------------------------------------
+.cr-refund-block {
+    margin-bottom: 6px;
+
+    &--reason { margin-top: 18px; margin-bottom: 0; }
+}
+
+.cr-refund-flabel {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #52667A;
+    margin-bottom: 8px;
+}
+
+.cr-refund-hint {
+    font-size: 12.5px;
+    color: #8A9BAD;
+    margin-top: 8px;
+}
+
+// --- Partial amount stepper ---------------------------------------------
+.cr-refund-stepper {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+    background: #fff;
+    border: 1px solid #D8E0EA;
+    border-radius: 10px;
+    overflow: hidden;
+
+    &__input {
+        flex: 1;
+        min-width: 0;
+        border: none;
+        outline: none;
+        padding: 14px 16px;
+        font-size: 15px;
+        font-weight: 600;
+        color: #1A232C;
+        background: transparent;
+        font-family: inherit;
+        font-variant-numeric: tabular-nums;
+        -moz-appearance: textfield;
+
+        &::-webkit-outer-spin-button,
+        &::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    }
+
+    &__suffix {
+        display: flex;
+        align-items: center;
+        padding: 0 14px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #8A9BAD;
+        border-left: 1px solid #EDF1F5;
+    }
+
+    &__btns {
+        display: flex;
+        flex-direction: column;
+        border-left: 1px solid #EDF1F5;
+        width: 38px;
+    }
+
+    &__btn {
+        flex: 1;
+        border: none;
+        background: #fff;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #52667A;
+        transition: background .15s ease, color .15s ease;
+
+        &:first-child { border-bottom: 1px solid #EDF1F5; }
+
+        &:hover {
+            background: #F4F7FA;
+            color: #0870FF;
+        }
+    }
+}
+
+// --- Line items table ----------------------------------------------------
+.cr-refund-items {
+    background: #fff;
+    border: 1px solid #E4E9F0;
+    border-radius: 11px;
+    overflow: hidden;
+    margin-bottom: 4px;
+
+    &__head {
+        display: grid;
+        grid-template-columns: 2.4fr .8fr 1fr;
+        gap: 12px;
+        padding: 13px 18px;
+        background: #FBFCFE;
+        border-bottom: 1px solid #EDF1F5;
+
+        span {
+            font-size: 12px;
+            font-weight: 700;
+            color: #52667A;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+    }
+
+    &__c { text-align: center; }
+    &__r { text-align: right; }
+
+    &__row {
+        display: grid;
+        grid-template-columns: 2.4fr .8fr 1fr;
+        gap: 12px;
+        align-items: center;
+        padding: 16px 18px;
+        border-bottom: 1px solid #F4F7FA;
+
+        &:last-child { border-bottom: none; }
+    }
+
+    &__product {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+        margin: 0;
+    }
+
+    &__meta {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+
+    &__name {
+        font-size: 14px;
+        font-weight: 600;
+        color: #1A232C;
+    }
+
+    &__sku {
+        font-size: 12px;
+        color: #8A9BAD;
+        font-family: monospace;
+    }
+
+    &__qty {
+        width: 100%;
+        text-align: center;
+        border: 1px solid #D8E0EA;
+        border-radius: 8px;
+        padding: 9px 8px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #1A232C;
+        background: #fff;
+        outline: none;
+        font-family: inherit;
+        -moz-appearance: textfield;
+
+        &::-webkit-outer-spin-button,
+        &::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+        &:focus { border-color: #0870FF; box-shadow: 0 0 0 3px rgba(8, 112, 255, .12); }
+    }
+
+    &__amount {
+        font-size: 14px;
+        font-weight: 600;
+        color: #1A232C;
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+    }
+}
+
+.cr-refund-checkbox {
+    width: 18px;
+    height: 18px;
+    accent-color: #0870FF;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+// --- Reason textarea -----------------------------------------------------
+.cr-refund-textarea {
+    width: 100%;
+    border: 1px solid #D8E0EA;
+    border-radius: 10px;
+    padding: 13px 14px;
+    font-size: 14px;
+    color: #1A232C;
+    background: #fff;
+    outline: none;
+    resize: vertical;
+    font-family: inherit;
+    line-height: 1.5;
+    min-height: 84px;
+
+    &:focus { border-color: #0870FF; box-shadow: 0 0 0 3px rgba(8, 112, 255, .12); }
+}
+
+// --- Buttons -------------------------------------------------------------
+.cr-refund-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 22px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all .15s ease;
+
+    &--ghost {
+        padding: 11px 20px;
+        border: 1px solid #D8E0EA;
+        background: #fff;
+        color: #1A232C;
+
+        &:hover { background: #F4F7FA; border-color: #B6C2CF; }
+    }
+
+    &--primary {
+        border: 1px solid #0870FF;
+        background: #0870FF;
+        color: #fff;
+        box-shadow: 0 1px 3px rgba(8, 112, 255, .4);
+
+        &:hover:not(:disabled) {
+            background: #0A62CC;
+            border-color: #0A62CC;
+            box-shadow: 0 4px 14px -4px rgba(8, 112, 255, .5);
+        }
+
+        &:disabled {
+            border-color: #BBD9FF;
+            background: #7FB4FF;
+            cursor: not-allowed;
+            opacity: .85;
+            box-shadow: none;
+        }
+    }
+}
+
+.cr-refund-select {
+    width: 100%;
+    border: 1px solid #D8E0EA;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 14px;
+    color: #1A232C;
+    background: #fff;
+    outline: none;
+    font-family: inherit;
+    line-height: 1.5;
+    cursor: pointer;
+
+    &:focus { border-color: #0870FF; box-shadow: 0 0 0 3px rgba(8, 112, 255, .12); }
+}
+
+.cr-refund-required {
+    color: #DE294C;
+    margin-left: 2px;
+}

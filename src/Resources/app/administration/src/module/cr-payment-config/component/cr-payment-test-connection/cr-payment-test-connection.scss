@@ -1,0 +1,52 @@
+.cr-test-connection {
+    --cr-brand: #189EFF;
+    --cr-brand-hover: #1483d6;
+    --cr-on-brand: #FFFFFF;
+
+    display: flex;
+
+    &__btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        height: 40px;
+        padding: 0 18px;
+        border: none;
+        border-radius: 6px;
+        background: var(--cr-brand);
+        color: var(--cr-on-brand);
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 1;
+        cursor: pointer;
+        transition: background-color 0.15s ease, opacity 0.15s ease;
+
+        &:hover:not(:disabled) {
+            background: var(--cr-brand-hover);
+        }
+
+        &:disabled {
+            opacity: 0.6;
+            cursor: default;
+        }
+    }
+
+    &__label {
+        white-space: nowrap;
+    }
+
+    &__spinner {
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(255, 255, 255, 0.45);
+        border-top-color: var(--cr-on-brand);
+        border-radius: 50%;
+        animation: cr-test-connection-spin 0.7s linear infinite;
+    }
+}
+
+@keyframes cr-test-connection-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}

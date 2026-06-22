@@ -1,0 +1,86 @@
+{% block cr_payment_refund_detail %}
+<div class="cr-refund-screen">
+    <div class="cr-refund-screen__inner">
+
+        {% block cr_payment_refund_detail_loading %}
+        <sw-skeleton v-if="isLoading" />
+        {% endblock %}
+
+        {% block cr_payment_refund_detail_error %}
+        <sw-alert
+            v-if="hasError && !isLoading"
+            variant="warning"
+        >
+            {{ $tc('cr-payment-refund.detail.errorLoading') }}
+        </sw-alert>
+        {% endblock %}
+
+        {% block cr_payment_refund_detail_not_supported %}
+        <template v-if="!isLoading && !hasError && refundSupported === false">
+            <cr-payment-refund-shell :title="$tc('cr-payment-refund.card.title')">
+                <div class="cr-refund-state">
+                    <div class="cr-refund-state__icon cr-refund-state__icon--warning">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M4.93 4.93l14.14 14.14"/></svg>
+                    </div>
+                    <div class="cr-refund-state__title">{{ $tc('cr-payment-refund.detail.notSupportedTitle') }}</div>
+                    <div class="cr-refund-state__text">{{ $tc('cr-payment-refund.detail.notSupportedText') }}</div>
+                </div>
+            </cr-payment-refund-shell>
+
+            <div class="cr-refund-screen__footer">
+                © {{ currentYear }} {{ $tc('cr-payment-refund.footer') }}
+            </div>
+        </template>
+        {% endblock %}
+
+        {% block cr_payment_refund_detail_no_capture %}
+        <template v-if="!isLoading && !hasError && refundSupported !== false && !capture">
+            <cr-payment-refund-shell :title="$tc('cr-payment-refund.card.title')">
+                <div class="cr-refund-state">
+                    <div class="cr-refund-state__icon cr-refund-state__icon--warning">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                    </div>
+                    <div class="cr-refund-state__title">{{ $tc('cr-payment-refund.detail.noCaptureTitle') }}</div>
+                    <div class="cr-refund-state__text">{{ $tc('cr-payment-refund.detail.noCaptureText') }}</div>
+                </div>
+            </cr-payment-refund-shell>
+
+            <div class="cr-refund-screen__footer">
+                © {{ currentYear }} {{ $tc('cr-payment-refund.footer') }}
+            </div>
+        </template>
+        {% endblock %}
+
+        {% block cr_payment_refund_detail_content %}
+        <template v-if="!isLoading && !hasError && refundSupported !== false && capture">
+
+            {% block cr_payment_refund_detail_card %}
+            <cr-payment-refund-card
+                :order="order"
+                :capture="capture"
+                :total-amount="totalAmount"
+                :refunded-amount="refundedAmount"
+                :remaining-amount="remainingAmount"
+                @refund-completed="onRefundCompleted"
+            />
+            {% endblock %}
+
+            {% block cr_payment_refund_detail_history %}
+            <cr-payment-refund-history
+                :order="order"
+                :refunds="refunds"
+            />
+            {% endblock %}
+
+            {% block cr_payment_refund_detail_footer %}
+            <div class="cr-refund-screen__footer">
+                © {{ currentYear }} {{ $tc('cr-payment-refund.footer') }}
+            </div>
+            {% endblock %}
+
+        </template>
+        {% endblock %}
+
+    </div>
+</div>
+{% endblock %}

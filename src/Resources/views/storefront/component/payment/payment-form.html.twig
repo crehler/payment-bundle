@@ -1,0 +1,30 @@
+{% sw_extends '@Storefront/storefront/component/payment/payment-form.html.twig' %}
+
+{% block component_payment_form_list %}
+    {{ parent() }}
+
+    {# Card form section - rendered after all payment methods #}
+    {% set checkoutBundleExt = page.extensions[constant('Crehler\\PaymentBundle\\Infrastructure\\Struct\\CheckoutConfirmPageExtensionStruct::API_ALIAS')] %}
+
+    {# Find the card payment method that is currently selected #}
+    {% set selectedCardPayment = null %}
+    {% for payment in page.paymentMethods %}
+        {% set crPaymentType = payment.extensions[constant('Crehler\\PaymentBundle\\Infrastructure\\Struct\\PaymentMethodTypeStruct::API_ALIAS')] %}
+        {% if crPaymentType and crPaymentType.isCard and context.paymentMethod.id is same as(payment.id) %}
+            {% set selectedCardPayment = payment %}
+        {% endif %}
+    {% endfor %}
+
+    {# Show card form if embedCardForm is enabled and card payment is selected #}
+    {% if checkoutBundleExt
+        and checkoutBundleExt.embedCardForm
+        and selectedCardPayment %}
+
+        <div class="crehler-external-payment-form crehler-external-card-form">
+            {% block crehler_payment_method_card_form %}
+                {# Override this block in provider templates (PayU, PayNow, etc.) #}
+                {# Variable 'selectedCardPayment' contains the selected card PaymentMethodEntity #}
+            {% endblock %}
+        </div>
+    {% endif %}
+{% endblock %}

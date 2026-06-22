@@ -1,0 +1,12 @@
+{% block sw_order_detail_details_payment_method_select %}
+    {% parent %}
+
+    {# Full-width row: the state-card content is a 2-col grid, so span all columns to
+       sit BELOW the payment-method select instead of beside it. #}
+    <div v-if="order && order.id" class="cr-gw-fullrow">
+        <cr-payment-gateway-details :order-id="order.id" />
+        <div class="cr-gw-trailer">
+            <cr-payment-integration-trailer />
+        </div>
+    </div>
+{% endblock %}

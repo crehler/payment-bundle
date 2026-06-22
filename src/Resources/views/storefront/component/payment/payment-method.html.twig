@@ -1,0 +1,144 @@
+{% sw_extends '@Storefront/storefront/component/payment/payment-method.html.twig' %}
+
+{% block component_payment_method_field %}
+    {% set crPaymentType = payment.extensions[constant('Crehler\\PaymentBundle\\Infrastructure\\Struct\\PaymentMethodTypeStruct::API_ALIAS')] %}
+    <div class="cr-payment-wrapper"
+         {% if crPaymentType %}
+             data-cr-payment="true"
+             {% if crPaymentType.isBlik %}data-cr-blik="true"{% endif %}
+             {% if crPaymentType.isBank %}data-cr-bank="true"{% endif %}
+             {% if crPaymentType.isCard %}data-cr-card="true"{% endif %}
+             {% if crPaymentType.isEwallet %}data-cr-ewallet="true"{% endif %}
+             {% if crPaymentType.isDeferred %}data-cr-deferred="true"{% endif %}
+             {% if crPaymentType.hasSubmethods %}data-cr-has-submethods="true"{% endif %}
+         {% endif %}>
+        {{ parent() }}
+    </div>
+{% endblock %}
+
+{% block component_payment_method_label %}
+    {{ parent() }}
+
+    {% set checkoutBundleExt = page.extensions[constant('Crehler\\PaymentBundle\\Infrastructure\\Struct\\CheckoutConfirmPageExtensionStruct::API_ALIAS')] %}
+    {% set crPaymentType = payment.extensions[constant('Crehler\\PaymentBundle\\Infrastructure\\Struct\\PaymentMethodTypeStruct::API_ALIAS')] %}
+
+    {# BLIK handler - show input on checkout page if blikInputPosition is 'checkout' #}
+    {% if checkoutBundleExt
+        and checkoutBundleExt.isBlikPayment
+        and checkoutBundleExt.blikInputPosition == 'checkout'
+        and crPaymentType and crPaymentType.isBlik
+        and context.paymentMethod.id is same as(payment.id) %}
+        {# No guest guard: BLIK is a code-entry payment that works for guests too, and the
+           card/bank rows have no such guard — the asymmetric guard hid the field on guest checkout. #}
+        {% sw_include '@CrehlerPaymentBundle/storefront/component/payment/blik-input.html.twig' %}
+    {% endif %}
+
+    {# Card form is now rendered in payment-form.html.twig after all payment methods #}
+    {# See crehler_payment_external_card_form_content block #}
+
+    {# Bank/EWallet/Deferred handler - submethods selector #}
+    {% if payment.extensions[constant('Crehler\\PaymentBundle\\Infrastructure\\StoreApi\\PaymentSubMethods\\PaymentSubMethodRouteResponse::API_ALIAS')]
+        and checkoutBundleExt
+        and checkoutBundleExt.isBankPayment
+        and context.paymentMethod.id is same as(payment.id) %}
+        {% set selectedSubPaymentMethodId = payment.extensions[constant('Crehler\\PaymentBundle\\Infrastructure\\StoreApi\\CustomerSubMethods\\PaymentCustomerSubMethodsRouteResponse::API_ALIAS')].subPaymentMethodId %}
+
+        {% set pluginOptions = {
+            activeClass: "payment-sub-methods--has-value",
+            optionsSelector: ".payment-sub-methods-options",
+            selectedSelector: ".payment-sub-methods-selected",
+            changeButtonSelector: ".payment-sub-methods-selected-change",
+            changeButtonSelectorActiveClass: "payment-sub-methods-selected-change--active",
+            selectedClass: "is-selected"
+        } %}
+
+        {% set submethods = payment.extensions[constant('Crehler\\PaymentBundle\\Infrastructure\\StoreApi\\PaymentSubMethods\\PaymentSubMethodRouteResponse::API_ALIAS')].elements %}
+        {% set submethodsCount = submethods|length %}
+
+        {# Single submethod - auto-select with info display, no change option #}
+        {% if submethodsCount == 1 %}
+            {% set singleSubmethod = submethods|first %}
+            <input type="hidden"
+                   name="paymentSubMethod"
+                   value="{{ singleSubmethod.providerId }}">
+            <div class="payment-sub-methods-selected payment-sub-methods-selected--readonly">
+                <div class="payment-sub-methods-selected-info">
+                    <div class="payment-sub-methods-selected-image-container">
+                        <img class="payment-sub-methods-selected-image"
+                             alt="{{ singleSubmethod.name|sw_sanitize }}"
+                             src="{{ singleSubmethod.mediaUrl }}">
+                    </div>
+                    <span class="payment-sub-methods-selected-name">{{ singleSubmethod.name }}</span>
+                </div>
+            </div>
+        {% elseif submethodsCount > 1 %}
+            {# Multiple submethods - show selector UI #}
+            {# Validate that selectedSubPaymentMethodId exists in available submethods #}
+            {% set validSelectedSubMethod = null %}
+            {% for submethod in submethods %}
+                {% if submethod.providerId is same as(selectedSubPaymentMethodId) %}
+                    {% set validSelectedSubMethod = submethod %}
+                {% endif %}
+            {% endfor %}
+
+            <div class="payment-sub-methods {% if validSelectedSubMethod %}payment-sub-methods--has-value{% endif %}"
+                 data-crehler-payment-bank-selector
+                 data-payment-bank-selector-plugin-options='{{ pluginOptions|json_encode }}'>
+
+                <div class="payment-sub-methods-options">
+                    {% for submethod in submethods %}
+                        <div class="payment-sub-method {% if submethod.providerId is same as(selectedSubPaymentMethodId) %}is-selected{% endif %}"
+                             data-submethod-id="{{ submethod.providerId }}">
+                            <input type="radio"
+                                   id="paymentSubMethod{{ payment.technicalName }}{{ submethod.providerId }}"
+                                   name="paymentSubMethod"
+                                   value="{{ submethod.providerId }}"
+                                   class="form-check-input payment-method-input payment-sub-method-input"
+                                   {% if submethod.providerId is same as(selectedSubPaymentMethodId) %}checked{% endif %}>
+                            <label class="form-check-label payment-sub-method-label"
+                                   for="paymentSubMethod{{ payment.technicalName }}{{ submethod.providerId }}">
+                                <span class="payment-sub-method-label-name">{{ submethod.name }}</span>
+                                <img class="payment-sub-method-label-image"
+                                     alt="{{ submethod.name|sw_sanitize }}"
+                                     src="{{ submethod.mediaUrl }}"
+                                     loading="lazy">
+                            </label>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                {% if validSelectedSubMethod %}
+                    <div class="payment-sub-methods-selected">
+                        <div class="payment-sub-methods-selected-header">
+                            <span class="payment-sub-methods-selected-label">
+                                {{ 'payment.checkoutConfirmSelectedLabel'|trans|sw_sanitize }}
+                            </span>
+                        </div>
+                        <div class="payment-sub-methods-selected-info">
+                            <div class="payment-sub-methods-selected-image-container">
+                                <img class="payment-sub-methods-selected-image"
+                                     alt="{{ validSelectedSubMethod.name|sw_sanitize }}"
+                                     src="{{ validSelectedSubMethod.mediaUrl }}">
+                            </div>
+                            <span class="payment-sub-methods-selected-name">{{ validSelectedSubMethod.name }}</span>
+                        </div>
+                        <button type="button" class="payment-sub-methods-selected-change">
+                            <span class="payment-sub-methods-selected-change-label">
+                                {{ 'payment.checkoutConfirmChangeLabel'|trans|sw_sanitize }}
+                            </span>
+                            <span class="payment-sub-methods-cancel-change-label">
+                                {{ 'payment.checkoutConfirmCancelChangeLabel'|trans|sw_sanitize }}
+                            </span>
+                            {% sw_icon 'arrow-down' style {
+                                class: 'confirm-checkout-chevron',
+                                size: 'xs',
+                                pack : 'solid'
+                            } %}
+                        </button>
+                    </div>
+                {% endif %}
+            </div>
+        {% endif %}
+    {% endif %}
+
+{% endblock %}

@@ -1,0 +1,32 @@
+{
+    "cr-payment-gateway": {
+        "title": "Payment details (gateway)",
+        "errorLoading": "Could not load gateway payment data. Please try again later.",
+        "noTransaction": "No gateway transaction for this order.",
+        "copy": "Copy ID",
+        "refresh": "Refresh",
+        "lastRefresh": "Last refresh",
+        "row": {
+            "operator": "Operator",
+            "id": "Transaction ID",
+            "status": "Status (gateway)",
+            "method": "Method",
+            "amount": "Amount",
+            "created": "Created at",
+            "title": "Title",
+            "mode": "Mode"
+        },
+        "badge": {
+            "paid": "Paid",
+            "pending": "Pending",
+            "failed": "Failed",
+            "refunded": "Refunded",
+            "unknown": "Unknown"
+        },
+        "mode": {
+            "production": "Production",
+            "sandbox": "Sandbox"
+        },
+        "detailsUnavailable": "Could not load transaction details from the gateway."
+    }
+}

@@ -1,0 +1,11 @@
+{% block sw_order_detail_content_tabs_general %}
+    {% parent %}
+
+    <sw-tabs-item
+        v-if="showCrehlerRefundTab"
+        :route="{ name: 'cr.payment.refund.detail', params: { id: $route.params.id } }"
+        :title="$tc('cr-payment-refund.tab.title')"
+    >
+        {{ $tc('cr-payment-refund.tab.title') }}
+    </sw-tabs-item>
+{% endblock %}

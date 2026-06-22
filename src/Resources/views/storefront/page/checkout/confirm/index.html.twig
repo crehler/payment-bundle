@@ -1,0 +1,10 @@
+{% sw_extends '@Storefront/storefront/page/checkout/confirm/index.html.twig' %}
+
+{% block page_checkout_confirm_tos_control %}
+    {{ parent() }}
+    {% if page.extensions[constant('Crehler\\PaymentBundle\\Infrastructure\\Struct\\CheckoutConfirmPageExtensionStruct::API_ALIAS')] and page.extensions[constant('Crehler\\PaymentBundle\\Infrastructure\\Struct\\CheckoutConfirmPageExtensionStruct::API_ALIAS')].consent %}
+        {# The consent component renders its own wrapper (required checkbox vs.
+           informational disclosure) depending on consent.requiresAcceptance. #}
+        {% sw_include '@CrehlerPaymentBundle/storefront/component/consent/index.html.twig' %}
+    {% endif %}
+{% endblock %}

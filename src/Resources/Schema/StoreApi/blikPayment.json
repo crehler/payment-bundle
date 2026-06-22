@@ -1,0 +1,193 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Crehler Payment Bundle - BLIK Payment",
+    "version": "1.0.0",
+    "description": "Store API endpoints for BLIK payments. The initial submit converts the cart into an order and initiates payment in a single call. Subsequent retries (e.g. after a rejected BLIK code) hit the order-scoped retry endpoint which creates a new OrderTransaction on the existing order so the previous failed transaction does not leak status into polling."
+  },
+  "paths": {
+    "/cr/payment/blik": {
+      "post": {
+        "tags": ["Crehler Payment", "BLIK"],
+        "summary": "Process the first BLIK payment attempt",
+        "description": "Processes a BLIK payment in a single call. This endpoint:\n1. Validates the BLIK code format (must be exactly 6 digits)\n2. Converts the current cart into an order\n3. Initiates payment processing with the BLIK code\n4. Returns the result with redirect URL or error\n\nIMPORTANT: Do NOT call /store-api/checkout/order before this endpoint — it creates the order automatically from the cart. The payment method must be set to BLIK in the context beforehand via PATCH /store-api/context.\n\nOn failure, the order is created with a failed transaction. To retry, use POST /cr/payment/blik/order/{orderId} with the returned orderId — it will create a new OrderTransaction on the existing order.",
+        "operationId": "crehlerBlikPayment",
+        "security": [{ "ApiKey": [], "ContextToken": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BlikPaymentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "BLIK payment processing result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlikPaymentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid BLIK code format or empty cart"
+          },
+          "403": {
+            "description": "Customer is not logged in and guest checkout is not enabled"
+          }
+        }
+      }
+    },
+    "/cr/payment/blik/order/{orderId}": {
+      "post": {
+        "tags": ["Crehler Payment", "BLIK"],
+        "summary": "Retry BLIK payment on an existing order",
+        "description": "Retries a BLIK payment for an order whose previous transaction failed. This endpoint:\n1. Validates the BLIK code format (must be exactly 6 digits)\n2. Creates a NEW OrderTransaction on the existing order and marks it as the order's primary transaction\n3. Starts the new transaction in the OPEN state with empty custom fields (no leaking gateway ID from the previous attempt)\n4. Initiates payment processing with the new BLIK code\n5. Returns the result with redirect URL or error\n\nUse this endpoint when the first attempt via POST /cr/payment/blik returned success=true but the customer subsequently saw a rejected status from polling /cr/payment/check. Do NOT call this endpoint for the very first payment — use POST /cr/payment/blik instead, which converts the cart into an order.",
+        "operationId": "crehlerBlikRetryPayment",
+        "security": [{ "ApiKey": [], "ContextToken": [] }],
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "path",
+            "required": true,
+            "description": "UUID of the order whose payment is being retried.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BlikRetryPaymentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "BLIK retry payment processing result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlikPaymentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid BLIK code format"
+          },
+          "403": {
+            "description": "Customer is not logged in and guest checkout is not enabled"
+          },
+          "404": {
+            "description": "Order not found or does not belong to the customer"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "BlikPaymentRequest": {
+        "type": "object",
+        "description": "Request to initiate a BLIK payment from the current cart.",
+        "properties": {
+          "paymentMethodId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "UUID of the BLIK payment method."
+          },
+          "blikCode": {
+            "type": "string",
+            "pattern": "^\\d{6}$",
+            "description": "6-digit BLIK code from the customer's banking app. Spaces are stripped automatically (e.g. '123 456' becomes '123456').",
+            "example": "123456"
+          },
+          "finishUrl": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "Custom URL the customer is redirected to after a successful payment. Headless clients (e.g. Nuxt storefronts that do not own /checkout/finish) should pass their own URL. If omitted, falls back to the Shopware-generated frontend.checkout.finish.page route.",
+            "example": "https://nuxt.example.com/checkout/success?orderId={orderId}"
+          },
+          "errorUrl": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "Custom URL the customer is redirected to after a failed payment. If omitted, falls back to the Shopware-generated frontend.checkout.finish.page route with paymentFailed=true.",
+            "example": "https://nuxt.example.com/checkout/failed?orderId={orderId}"
+          }
+        },
+        "required": ["paymentMethodId", "blikCode"]
+      },
+      "BlikRetryPaymentRequest": {
+        "type": "object",
+        "description": "Request to retry BLIK payment on an existing order. Unlike BlikPaymentRequest it does NOT carry paymentMethodId — the retry uses the payment method already set on the previous transaction.",
+        "properties": {
+          "blikCode": {
+            "type": "string",
+            "pattern": "^\\d{6}$",
+            "description": "6-digit BLIK code from the customer's banking app. Spaces are stripped automatically.",
+            "example": "123456"
+          },
+          "finishUrl": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "Custom URL the customer is redirected to after a successful retry payment. If omitted, falls back to the Shopware-generated frontend.checkout.finish.page route."
+          },
+          "errorUrl": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "Custom URL the customer is redirected to after a failed retry payment. If omitted, falls back to the Shopware-generated frontend.checkout.finish.page route with paymentFailed=true."
+          }
+        },
+        "required": ["blikCode"]
+      },
+      "BlikPaymentResponse": {
+        "type": "object",
+        "description": "Result of BLIK payment processing (initial or retry).",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Whether the BLIK payment was processed successfully."
+          },
+          "redirectUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "URL to redirect the user to after successful payment initiation. May point to a BLIK authorization page or directly to the order finish page. Null on failure.",
+            "example": "https://shop.example.com/payment/finalize-transaction?_sw_payment_token=eyJ..."
+          },
+          "error": {
+            "type": "string",
+            "nullable": true,
+            "description": "Error message describing what went wrong. Null on success.",
+            "example": "BLIK code rejected"
+          },
+          "orderId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "UUID of the order. Present on both success and failure — use it to retry via POST /cr/payment/blik/order/{orderId} if the first attempt fails."
+          },
+          "apiAlias": {
+            "type": "string",
+            "example": "cr_payment_blik_response"
+          }
+        },
+        "required": ["success"]
+      }
+    }
+  }
+}

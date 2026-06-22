@@ -1,0 +1,22 @@
+{% block cr_payment_integration_trailer %}
+<div class="cr-payment-trailer">
+    <div class="cr-payment-trailer__bar"></div>
+    <div class="cr-payment-trailer__icon">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FF5C00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+    </div>
+    <div class="cr-payment-trailer__body">
+        <div class="cr-payment-trailer__eyebrow">
+            <span class="cr-payment-trailer__kicker">{{ $tc('cr-payment-integration.trailer.kicker') }}</span>
+            <img class="cr-payment-trailer__logo" src="/bundles/crehlerpayment/img/crehler-logo.svg" alt="CREHLER" />
+        </div>
+        <div class="cr-payment-trailer__lead">
+            {{ $tc('cr-payment-integration.trailer.lead') }} <span class="cr-payment-trailer__accent">CREHLER</span> {{ $tc('cr-payment-integration.trailer.leadTail') }}
+        </div>
+        <div class="cr-payment-trailer__sub">{{ $tc('cr-payment-integration.trailer.sub') }}</div>
+    </div>
+    <a class="cr-payment-trailer__link" href="https://crehler.com" target="_blank" rel="noopener noreferrer">
+        crehler.com
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg>
+    </a>
+</div>
+{% endblock %}
