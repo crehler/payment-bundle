@@ -17,6 +17,8 @@
       "failSubtitle": "We did not receive payment confirmation in time.",
       "declinedText": "Payment failed",
       "declinedSubtitle": "Your payment was declined or cancelled.",
+      "mismatchText": "Payment completed, but not booked",
+      "mismatchSubtitle": "The payment was completed at the gateway, but the shop has not booked it yet. Please contact the shop's support with your order number.",
       "changePaymentMethod": "Choose another method and retry payment"
     },
     "transition": {

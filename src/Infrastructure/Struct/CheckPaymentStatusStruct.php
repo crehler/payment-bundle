@@ -21,6 +21,7 @@ final class CheckPaymentStatusStruct extends Struct
         public readonly bool $status,
         public readonly bool $waiting,
         public readonly bool $failed,
+        public readonly bool $mismatch = false,
     ) {
     }
 

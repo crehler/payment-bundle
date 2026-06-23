@@ -1,5 +1,30 @@
 # Changelog
 
+## 6.0.1
+
+### Changed
+
+- **`CheckPaymentService` now treats the local transaction state as the source of
+  truth.** The payment status is resolved from the Shopware order transaction first;
+  the gateway is queried **only** on the final "reconcile" poll (after the storefront's
+  wait window) when the transaction is still not `paid` locally — instead of on every poll.
+
+### Added
+
+- **`PaymentStatus::paidNotBooked()`** — new state for "paid at the gateway but not
+  booked in the shop". When the wait window elapses and the gateway confirms payment
+  while Shopware has not booked it, the storefront shows a "contact support" message
+  instead of a generic timeout.
+  - New `CheckPaymentStatusRequest::$reconcile` flag and `CheckPaymentStatusStruct::$mismatch`
+    field on `POST /store-api/cr/payment/check`.
+  - The `cr-check-payment-status` storefront poller sends `reconcile` after the wait
+    window and renders the message; snippets `payment.checkPayment.mismatchText` /
+    `mismatchSubtitle` (pl/en).
+- **Compiled storefront assets are now shipped in the package** (like the admin build),
+  so install / production is `composer install` + `assets:install` + `theme:compile`
+  with **no Node** on the server. Storefront chunks use deterministic names
+  (`webpackChunkName`), so the build is reproducible.
+
 ## 6.0.0
 
 Major release consolidating duplicated provider logic into the shared bundle.
@@ -20,49 +45,3 @@ pieces. Plugins must require `crehler/payment-bundle: ^6.0`.
   copying legacy `crehler_tpay_saved_card` and `paynow_customer_card_token` rows.
 - Shared `cr-saved-card-selector` storefront plugin.
 - `Domain\Constant\PaymentCustomFields::GATEWAY_PAYMENT_ID`.
-
-## Unreleased
-
-### Changed — **BREAKING** — `PaymentGatewayStatusProviderInterface` signature (LIB-1782)
-
-`PaymentGatewayStatusProviderInterface::getPaymentStatus()` now returns the canonical
-`Crehler\PaymentBundle\Domain\ValueObjects\PaymentStatus` value object (or `null`) instead
-of `GatewayPaymentStatus`. The `GatewayPaymentStatus` VO has been removed entirely.
-
-**Why:** the removed VO carried PayNow-era uppercase status constants (`CONFIRMED`,
-`PENDING`, `REJECTED`, ...) that did not match what Tpay (and other gateways) return
-from their REST APIs. As a result the mapping always fell through to `failed()` and
-`/store-api/cr/payment/check` returned `status:false, waiting:false` even for paid orders.
-
-**Migration for plugins implementing `PaymentGatewayStatusProviderInterface`:**
-
-Before:
-
-```php
-public function getPaymentStatus(OrderTransactionEntity $orderTransaction): ?GatewayPaymentStatus
-{
-    // ...
-    return new GatewayPaymentStatus(status: $rawGatewayStatus, gatewayPaymentId: $id);
-}
-```
-
-After (each provider owns its mapping):
-
-```php
-public function getPaymentStatus(OrderTransactionEntity $orderTransaction): ?PaymentStatus
-{
-    // ...
-    return match ($rawGatewayStatus) {
-        'paid', 'correct'   => PaymentStatus::paid(),
-        'pending', 'new'    => PaymentStatus::waiting(),
-        'error', 'failed'   => PaymentStatus::failed(),
-        default             => null, // fall back to Shopware state machine
-    };
-}
-```
-
-Returning `null` defers the decision to the Shopware order-transaction state machine.
-Use it for gateway statuses that do not map cleanly to paid/waiting/failed (e.g. `chargeback`,
-`refund`, or unknown values).
-
-See `docs/providers/how-to-add-provider.md` §8 for the full guide.

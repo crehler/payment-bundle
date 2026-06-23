@@ -15,6 +15,7 @@ final readonly class CheckPaymentStatusRequest
 {
     public function __construct(
         public string $orderId,
+        public bool $reconcile = false,
     ) {
     }
 }

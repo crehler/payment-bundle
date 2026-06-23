@@ -30,6 +30,10 @@ class CheckPaymentStatusValueResolver implements ValueResolverInterface
             return [];
         }
 
-        yield new CheckPaymentStatusRequest(orderId: $orderId);
+        // Final "reconcile" poll (sent by the storefront once the wait window
+        // elapses) — only then do we ask the gateway for a paid/not-booked mismatch.
+        $reconcile = $request->get('reconcile', false) === true;
+
+        yield new CheckPaymentStatusRequest(orderId: $orderId, reconcile: $reconcile);
     }
 }

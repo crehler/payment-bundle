@@ -28,10 +28,10 @@ Thumbs.db
 # Cache
 .php-cs-fixer.cache
 
-# Build artifacts. Compiled admin (Vite) output IS committed so that a
-# production deploy is `composer install` + `assets:install` with no Node
-# on the server. Storefront (webpack) dist stays ignored (built at shop level).
-/src/Resources/app/storefront/dist/
+# Build artifacts. Compiled admin (Vite) AND storefront (webpack) output IS
+# committed, so install / produkcja = `composer install` + `assets:install`
+# + `theme:compile` z gotowymi assetami, BEZ Node na serwerze. Chunki storefrontu
+# mają deterministyczne nazwy (webpackChunkName), więc są reprodukowalne.
 
 # Local agent/session dirs
 .claude/

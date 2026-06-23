@@ -17,6 +17,8 @@
       "failSubtitle": "Nie otrzymaliśmy potwierdzenia płatności na czas.",
       "declinedText": "Płatność nie powiodła się",
       "declinedSubtitle": "Twoja płatność została odrzucona lub anulowana.",
+      "mismatchText": "Płatność zrealizowana, ale niezaksięgowana",
+      "mismatchSubtitle": "Płatność została zrealizowana w bramce, ale sklep jeszcze jej nie zaksięgował. Skontaktuj się z obsługą sklepu, podając numer zamówienia.",
       "changePaymentMethod": "Wybierz inną metodę i ponów płatność"
     },
     "transition": {

@@ -12,6 +12,8 @@ export default class CrehlerCheckPayment extends Plugin {
         subtitleTimeout: "",
         textDeclined: "",
         subtitleDeclined: "",
+        textMismatch: "",
+        subtitleMismatch: "",
         waitingTime: 120000,
         redirectTo: "",
     }
@@ -40,12 +42,44 @@ export default class CrehlerCheckPayment extends Plugin {
         // Hard stop on elapsed time (independent of how many checks completed), so a
         // slow/stalled request can never block the timeout.
         if (!this._finished && this._ticks >= this.totalTicks) {
-            this._finish('failed', 'timeout');
+            // Wait window elapsed — do ONE reconcile check against the gateway before
+            // giving up, to detect a payment that succeeded but wasn't booked locally.
+            this._reconcile();
 
             return;
         }
 
         this._checkOrderPayment();
+    }
+
+    /**
+     * Final reconcile after the wait window: asks the backend to compare with the
+     * gateway. paid → success; mismatch (paid at gateway, not booked) → support
+     * message; otherwise → timeout.
+     */
+    _reconcile() {
+        if (this._finished) {
+            return;
+        }
+
+        this._client.post(
+            this.options.checkUrl,
+            JSON.stringify({orderId: this.options.orderId, reconcile: true}),
+            (response) => {
+                try {
+                    const res = JSON.parse(response);
+                    if (res.status === true) {
+                        this._finish('success');
+                    } else if (res.mismatch === true) {
+                        this._finish('mismatch');
+                    } else {
+                        this._finish('failed', 'timeout');
+                    }
+                } catch (e) {
+                    this._finish('failed', 'timeout');
+                }
+            }
+        );
     }
 
     _checkOrderPayment() {
@@ -84,6 +118,13 @@ export default class CrehlerCheckPayment extends Plugin {
 
         if (res.status === true && res.waiting === false) {
             this._finish('success');
+            return;
+        }
+
+        // Paid at the gateway but not booked in the shop — stop and show the
+        // "contact support" message instead of a generic error.
+        if (res.mismatch === true) {
+            this._finish('mismatch');
             return;
         }
 
@@ -185,6 +226,27 @@ export default class CrehlerCheckPayment extends Plugin {
             }
             if (subtitleEl) subtitleEl.textContent = this.options.subtitleSuccess || '';
             if (countdownEl) countdownEl.style.display = 'block';
+
+            return;
+        }
+
+        // Paid at the gateway but the shop hasn't booked it — payment went through,
+        // so no retry; tell the customer to contact support with the order number.
+        if (status === 'mismatch') {
+            if (checkEl) checkEl.classList.add('d-none');
+            if (errorIconEl) errorIconEl.classList.remove('d-none');
+            if (countdownEl) countdownEl.style.display = 'none';
+            if (editPaymentBtn) editPaymentBtn.classList.add('d-none');
+
+            if (titleEl) {
+                titleEl.textContent = this.options.textMismatch || 'Płatność zrealizowana, ale niezaksięgowana';
+                titleEl.classList.remove('text-success', 'text-danger');
+                titleEl.classList.add('text-warning');
+            }
+            if (subtitleEl) {
+                subtitleEl.textContent = this.options.subtitleMismatch
+                    || 'Płatność została zrealizowana w bramce, ale sklep jeszcze jej nie zaksięgował. Skontaktuj się z obsługą sklepu, podając numer zamówienia.';
+            }
 
             return;
         }

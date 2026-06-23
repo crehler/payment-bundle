@@ -58,20 +58,35 @@ final class CheckPaymentService
             return new CheckPaymentStatusResponseDTO(paymentStatus: PaymentStatus::failed());
         }
 
-        $gatewayPaymentStatus = $this->getGatewayPaymentStatus($transaction);
-
-        if ($gatewayPaymentStatus !== null) {
-            return new CheckPaymentStatusResponseDTO(paymentStatus: $gatewayPaymentStatus);
-        }
-
+        // Local transaction state is the source of truth.
         $stateName = $transaction->getStateMachineState()?->getTechnicalName();
 
-        $paymentStatus = match ($stateName) {
+        $localStatus = match ($stateName) {
             OrderTransactionStates::STATE_OPEN,
             OrderTransactionStates::STATE_IN_PROGRESS => PaymentStatus::waiting(),
             OrderTransactionStates::STATE_PAID => PaymentStatus::paid(),
             default => PaymentStatus::failed(),
         };
+
+        // Paid or failed → definitive, no need to bother the gateway.
+        if (!$localStatus->isWaiting) {
+            return new CheckPaymentStatusResponseDTO(paymentStatus: $localStatus);
+        }
+
+        // Still waiting locally. Within the wait window we keep waiting; we only
+        // query the gateway on the final "reconcile" poll (after the storefront's
+        // wait window elapses) to detect a paid-at-gateway / not-booked mismatch.
+        if (!$request->reconcile) {
+            return new CheckPaymentStatusResponseDTO(paymentStatus: $localStatus);
+        }
+
+        $gatewayPaymentStatus = $this->getGatewayPaymentStatus($transaction);
+
+        // Gateway confirms paid but the shop never booked it → surface the mismatch
+        // so the customer is told to contact support (instead of a plain timeout).
+        $paymentStatus = $gatewayPaymentStatus?->isPaid === true
+            ? PaymentStatus::paidNotBooked()
+            : PaymentStatus::failed();
 
         return new CheckPaymentStatusResponseDTO(paymentStatus: $paymentStatus);
     }

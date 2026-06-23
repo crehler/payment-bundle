@@ -46,7 +46,8 @@ class CheckPaymentStatusRoute extends AbstractCheckPaymentStatusRoute
         $struct = new CheckPaymentStatusStruct(
             status: $paymentStatus->isPaid,
             waiting: $paymentStatus->isWaiting,
-            failed: $paymentStatus->hasFailed()
+            failed: $paymentStatus->hasFailed(),
+            mismatch: $paymentStatus->isPaidNotBooked
         );
 
         return new CheckPaymentStatusResponse(object: $struct);
