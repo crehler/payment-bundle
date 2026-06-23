@@ -1,5 +1,16 @@
 # Changelog
 
+## 6.0.2
+
+### Changed
+
+- **Transition page no longer hardcodes provider logos / asset packages.** The payment
+  transition page now exposes an overridable `cr_payment_transition_provider_logo` Twig
+  block (default: a generic card icon). Each provider plugin renders its own logo from
+  **its own** asset package by overriding the block — removing the bundle's coupling to
+  provider plugin/bundle names, which broke the transition page after a provider plugin
+  was renamed. Providers that ship such an override require `crehler/payment-bundle: >=6.0.2`.
+
 ## 6.0.1
 
 ### Changed

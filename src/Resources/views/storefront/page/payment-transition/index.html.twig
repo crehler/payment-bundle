@@ -237,16 +237,17 @@
                 <div class="payment-icon-container">
                     <div class="payment-icon-bg"></div>
                     <div class="payment-icon-inner">
-                        {% if providerLogo == 'paynow' %}
-                            <img src="{{ asset('icons/paynow_bank.png', '@CrehlerPayNowPayment') }}" alt="PayNow" class="payment-provider-logo">
-                        {% elseif providerLogo == 'payu' %}
-                            <img src="{{ asset('icons/payu_logo.jpg', '@CrehlerPayUPayment') }}" alt="PayU" class="payment-provider-logo">
-                        {% else %}
+                        {# Provider plugins override this block to render their own logo from
+                           their OWN asset package (e.g. @CrehlerPayNow). They must guard on
+                           their own `providerLogo` value and call {{ parent() }} otherwise, so
+                           overrides compose and never show the wrong gateway's logo. The bundle
+                           itself stays provider-agnostic — default is a generic card icon. #}
+                        {% block cr_payment_transition_provider_logo %}
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
                                 <line x1="1" y1="10" x2="23" y2="10"></line>
                             </svg>
-                        {% endif %}
+                        {% endblock %}
                     </div>
                 </div>
 
