@@ -4,8 +4,10 @@ import './cr-payment-refund-detail.scss';
 const { Component } = Shopware;
 const { Criteria } = Shopware.Data;
 
-// Refunds in these states no longer consume the refundable balance.
-const NON_COUNTED_STATES = ['cancelled', 'failed'];
+// Only refunds the gateway has actually confirmed consume the refundable balance.
+// 'open' means no confirmed gateway response yet (including a refund stuck there by a
+// broken/unsupported handler) and must NOT count as refunded money.
+const GATEWAY_CONFIRMED_STATES = ['completed', 'in_progress'];
 
 Component.register('cr-payment-refund-detail', {
     template,
@@ -69,7 +71,7 @@ Component.register('cr-payment-refund-detail', {
 
         refundedAmount() {
             const sum = this.refunds
-                .filter((r) => !NON_COUNTED_STATES.includes(r.stateMachineState?.technicalName))
+                .filter((r) => GATEWAY_CONFIRMED_STATES.includes(r.stateMachineState?.technicalName))
                 .reduce((acc, r) => acc + (r.amount?.totalPrice ?? 0), 0);
 
             return Math.round(sum * 100) / 100;

@@ -5,6 +5,11 @@
             "buttonSandbox": "Test sandbox credentials",
             "success": "Gateway connection works — the credentials are valid.",
             "error": "Could not connect to the gateway. Please check the credentials."
+        },
+        "validityTime": {
+            "hours": "Hours",
+            "minutes": "Minutes",
+            "seconds": "Seconds"
         }
     }
 }

@@ -5,6 +5,11 @@
             "buttonSandbox": "Testuj dane sandbox",
             "success": "Połączenie z bramką działa — dane są poprawne.",
             "error": "Nie udało się połączyć z bramką. Sprawdź dane dostępowe."
+        },
+        "validityTime": {
+            "hours": "Godziny",
+            "minutes": "Minuty",
+            "seconds": "Sekundy"
         }
     }
 }

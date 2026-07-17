@@ -77,4 +77,11 @@ interface OrderTransactionRepositoryInterface
      * remains in OPEN and pollutes /cr/payment/check polling.
      */
     public function markTransactionFailed(string $orderTransactionId, ?Context $context = null): void;
+
+    /**
+     * Find an order transaction by the gateway payment id stored on
+     * customFields.crehler_payment_gateway_id. Safe without a sales-channel
+     * filter as long as the gateway's own transaction id is globally unique.
+     */
+    public function findByGatewayPaymentId(string $gatewayPaymentId, ?Context $context = null): ?OrderTransactionEntity;
 }

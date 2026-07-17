@@ -13,7 +13,7 @@ namespace Crehler\PaymentBundle\Infrastructure\Enum;
 
 use Crehler\PaymentBundle\Infrastructure\Util\Lifecycle\Activate\PaymentMethodActivator;
 use Crehler\PaymentBundle\Infrastructure\Util\Lifecycle\Deactivate\PaymentMethodDeactivator;
-use Crehler\PaymentBundle\Infrastructure\Util\Lifecycle\Install\{BundleConfigDefaultsInstaller, BundleMigrationInstaller, CustomFieldCreator, PaymentMethodInstaller};
+use Crehler\PaymentBundle\Infrastructure\Util\Lifecycle\Install\{BundleConfigDefaultsInstaller, BundleMigrationInstaller, CustomFieldCreator, PaymentMethodInstaller, RefundOriginCustomFieldInstaller};
 use Crehler\PaymentBundle\Infrastructure\Util\Lifecycle\Update\PaymentMethodUpdater;
 
 enum LifecycleEnum: string
@@ -37,6 +37,10 @@ enum LifecycleEnum: string
                 // Seeds shared bundle config defaults (display settings + transaction
                 // description) into system_config. Runs on install and update.
                 BundleConfigDefaultsInstaller::class,
+                // Adds the "Refund origin" (shop/gateway_sync) custom field on
+                // order_transaction_capture_refund. Global, not per payment method —
+                // idempotent no-op on repeated install/update.
+                RefundOriginCustomFieldInstaller::class,
             ],
             self::UNINSTALL, self::DEACTIVATE => [
                 PaymentMethodDeactivator::class,

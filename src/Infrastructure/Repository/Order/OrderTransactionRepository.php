@@ -181,6 +181,24 @@ final readonly class OrderTransactionRepository implements OrderTransactionRepos
         $this->orderTransactionStateHandler->fail($orderTransactionId, $context);
     }
 
+    public function findByGatewayPaymentId(string $gatewayPaymentId, ?Context $context = null): ?OrderTransactionEntity
+    {
+        $context = $context ?? Context::createDefaultContext();
+
+        $criteria = new Criteria();
+        $criteria->addAssociation('order');
+        $criteria->addFilter(new EqualsFilter('customFields.' . PaymentCustomFields::GATEWAY_PAYMENT_ID, $gatewayPaymentId));
+        // Deterministic tie-break: gatewayPaymentId is expected to be globally unique,
+        // but if that ever broke (e.g. two gateways issuing the same id), silently
+        // picking an arbitrary row would be worse than picking the newest one.
+        $criteria->addSorting(new FieldSorting('createdAt', FieldSorting::DESCENDING));
+        $criteria->setLimit(1);
+
+        $orderTransaction = $this->orderTransactionRepository->search($criteria, $context)->first();
+
+        return $orderTransaction instanceof OrderTransactionEntity ? $orderTransaction : null;
+    }
+
     private function getLatestTransactionForOrder(string $orderId, Context $context): OrderTransactionEntity
     {
         $criteria = new Criteria();

@@ -16,4 +16,5 @@ enum CustomFieldsEnum: string
     case CUSTOM_FIELD_SET = 'crehler_payment_set';
     case CUSTOM_FIELD_CUSTOMER_PAYMENT = 'crehler_payments';
     case CUSTOM_FIELD_PAYMENT_SUB_METHOD = 'crehler_payment_submethod';
+    case CUSTOM_FIELD_SET_REFUND = 'crehler_payment_refund_set';
 }

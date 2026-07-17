@@ -23,4 +23,11 @@ final class PaymentCustomFields
      * @var string
      */
     public const GATEWAY_PAYMENT_ID = 'crehler_payment_gateway_id';
+
+    /**
+     * Origin of an order_transaction_capture_refund entity — see Domain\ValueObjects\RefundOrigin.
+     *
+     * @var string
+     */
+    public const REFUND_ORIGIN = 'crehler_payment_refund_origin';
 }

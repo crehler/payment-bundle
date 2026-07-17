@@ -16,8 +16,9 @@ use Crehler\PaymentBundle\Application\Port\Driven\{OrderTransactionRepositoryInt
 use Crehler\PaymentBundle\Application\Port\Driving\OrderTransactionServicePort;
 use Crehler\PaymentBundle\Application\Service\RefundStateReflector;
 use Crehler\PaymentBundle\Domain\Constant\PaymentCustomFields;
+use Crehler\PaymentBundle\Infrastructure\Configuration\PaymentBundleConfigService;
 use Crehler\PaymentBundle\Domain\Entity\OrderTransaction\OrderTransaction;
-use Crehler\PaymentBundle\Domain\ValueObjects\RefundStatus;
+use Crehler\PaymentBundle\Domain\ValueObjects\{RefundOrigin, RefundStatus};
 use Crehler\PaymentBundle\Shared\{EnhancedLogger, FinalizeTokenService, UrlSigner};
 use RuntimeException;
 use Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\{OrderTransactionEntity, OrderTransactionStateHandler};
@@ -93,6 +94,11 @@ abstract class AbstractPaymentMethodHandler extends AbstractPaymentHandler
      */
     protected ?UrlSigner $urlSigner = null;
 
+    /**
+     * Injected via setter for the same reason as urlSigner above.
+     */
+    protected ?PaymentBundleConfigService $paymentBundleConfigService = null;
+
     private bool $refundProviderResolved = false;
 
     private ?RefundProviderPort $resolvedRefundProvider = null;
@@ -131,6 +137,12 @@ abstract class AbstractPaymentMethodHandler extends AbstractPaymentHandler
     public function setUrlSigner(UrlSigner $urlSigner): void
     {
         $this->urlSigner = $urlSigner;
+    }
+
+    #[Required]
+    public function setPaymentBundleConfigService(PaymentBundleConfigService $paymentBundleConfigService): void
+    {
+        $this->paymentBundleConfigService = $paymentBundleConfigService;
     }
 
     public function supports(PaymentHandlerType $type, string $paymentMethodId, Context $context): bool
@@ -175,6 +187,13 @@ abstract class AbstractPaymentMethodHandler extends AbstractPaymentHandler
         if ($capture === null || $orderTransaction === null || $order === null) {
             throw PaymentException::unknownRefund($transaction->getRefundId());
         }
+
+        // Marks who initiated the refund (not the outcome) — set unconditionally before
+        // the gateway call below, which may still fail.
+        $this->refundRepository->update([[
+            'id' => $refund->getId(),
+            'customFields' => [PaymentCustomFields::REFUND_ORIGIN => RefundOrigin::SHOP->value],
+        ]], $context);
 
         $gatewayPaymentId = $this->resolveGatewayPaymentId($capture, $orderTransaction);
         if ($gatewayPaymentId === null || $gatewayPaymentId === '') {
@@ -300,6 +319,27 @@ abstract class AbstractPaymentMethodHandler extends AbstractPaymentHandler
 
             $blikCode = $request->get('blikCode');
 
+            // 'separate' input position: the code field is never rendered in checkout, so
+            // there is nothing to authorize yet. Send the customer straight to the bundle's
+            // own code-entry page instead of calling the gateway here — the gateway
+            // transaction is created once, when the code is actually submitted from that
+            // page (via the existing BLIK retry endpoint), so no codeless/never-confirmed
+            // transaction is left dangling at the provider.
+            if (empty($blikCode) && $this->resolveBlikInputPosition($orderTransaction) === 'separate') {
+                $this->markInProgress($transaction->getOrderTransactionId(), $context);
+
+                return new RedirectResponse(
+                    $this->router->generate(
+                        name: 'frontend.cr.blik.authorize',
+                        parameters: [
+                            'transactionId' => $transaction->getOrderTransactionId(),
+                            'target' => $transaction->getReturnUrl(),
+                        ],
+                        referenceType: RouterInterface::ABSOLUTE_URL
+                    )
+                );
+            }
+
             $paymentResult = $this->processPayment(
                 request: $request,
                 transaction: $transaction,
@@ -346,6 +386,17 @@ abstract class AbstractPaymentMethodHandler extends AbstractPaymentHandler
 
             throw $e;
         }
+    }
+
+    /**
+     * @return string One of: 'checkout', 'separate', 'hidden'
+     */
+    private function resolveBlikInputPosition(OrderTransaction $orderTransaction): string
+    {
+        return $this->paymentBundleConfigService?->getBlikInputPositionForHandler(
+            handlerIdentifier: $orderTransaction->paymentMethod->handlerIdentifier,
+            salesChannelId: $orderTransaction->order->salesChannelId,
+        ) ?? 'checkout';
     }
 
     /**

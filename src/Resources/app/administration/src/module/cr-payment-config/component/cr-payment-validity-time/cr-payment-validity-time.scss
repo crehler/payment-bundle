@@ -1,0 +1,10 @@
+.cr-validity-time {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+
+    &__field {
+        flex: 1;
+        min-width: 0;
+    }
+}

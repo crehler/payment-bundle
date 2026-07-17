@@ -60,7 +60,23 @@ final readonly class PaymentBundleConfigService
      */
     public function getBlikInputPosition(PaymentMethodEntity $paymentMethod, ?string $salesChannelId = null): string
     {
-        $configDomain = $this->resolveConfigDomain($paymentMethod);
+        $handlerIdentifier = $paymentMethod->getHandlerIdentifier();
+
+        return $handlerIdentifier === null
+            ? 'checkout'
+            : $this->getBlikInputPositionForHandler($handlerIdentifier, $salesChannelId);
+    }
+
+    /**
+     * Same as getBlikInputPosition(), for callers that only have the handler identifier
+     * (e.g. the lightweight domain PaymentMethod value object used inside payment handlers)
+     * rather than a full native PaymentMethodEntity.
+     *
+     * @return string One of: 'checkout', 'separate', 'hidden'
+     */
+    public function getBlikInputPositionForHandler(string $handlerIdentifier, ?string $salesChannelId = null): string
+    {
+        $configDomain = $this->resolveConfigDomainForHandlerIdentifier($handlerIdentifier);
 
         if ($configDomain === null) {
             return 'checkout';
@@ -104,10 +120,13 @@ final readonly class PaymentBundleConfigService
     {
         $handlerIdentifier = $paymentMethod->getHandlerIdentifier();
 
-        if ($handlerIdentifier === null) {
-            return null;
-        }
+        return $handlerIdentifier === null
+            ? null
+            : $this->resolveConfigDomainForHandlerIdentifier($handlerIdentifier);
+    }
 
+    private function resolveConfigDomainForHandlerIdentifier(string $handlerIdentifier): ?string
+    {
         // Extract namespace parts (e.g., "Crehler\PayU\Handler\CardHandler")
         $parts = explode('\\', $handlerIdentifier);
 

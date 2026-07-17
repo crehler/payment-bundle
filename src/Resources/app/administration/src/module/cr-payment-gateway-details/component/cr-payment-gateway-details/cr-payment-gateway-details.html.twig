@@ -101,13 +101,31 @@
             </div>
 
             <!-- Mode -->
-            <div class="cr-gw__row cr-gw__row--last">
+            <div class="cr-gw__row">
                 <span class="cr-gw__label">{{ $tc('cr-payment-gateway.row.mode') }}</span>
                 <span class="cr-gw__mode">
                     <span class="cr-gw__mode-dot"></span>
                     {{ modeLabel }}
                 </span>
             </div>
+
+            {% block cr_payment_gateway_details_refunds %}
+            <!-- Refunds (live from the gateway — complements the hourly reconciliation task) -->
+            <div class="cr-gw__row cr-gw__row--last cr-gw__row--refunds">
+                <span class="cr-gw__label">{{ $tc('cr-payment-gateway.refunds.label') }}</span>
+                <div v-if="hasRefunds" class="cr-gw__refunds">
+                    <div v-for="(refund, index) in refunds" :key="refund.gatewayRefundId || index" class="cr-gw__refunds-item">
+                        <span class="cr-gw__badge" :class="refundBadgeClass(refund)">
+                            <span class="cr-gw__badge-dot"></span>
+                            {{ refundBadgeLabel(refund) }}
+                        </span>
+                        <span class="cr-gw__amount cr-gw__refunds-amount">{{ refundAmountFormatted(refund) }}</span>
+                        <span v-if="refund.gatewayRefundId" class="cr-gw__mono cr-gw__refunds-id">{{ refund.gatewayRefundId }}</span>
+                    </div>
+                </div>
+                <span v-else class="cr-gw__value cr-gw__muted">{{ $tc('cr-payment-gateway.refunds.empty') }}</span>
+            </div>
+            {% endblock %}
         </div>
 
         {% block cr_payment_gateway_details_footer %}

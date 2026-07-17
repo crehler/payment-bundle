@@ -25,6 +25,9 @@ use JsonSerializable;
  */
 final readonly class GatewayPaymentDetails implements JsonSerializable
 {
+    /**
+     * @param GatewayRefundSummary[] $refunds
+     */
     public function __construct(
         public string $provider,
         public string $gatewayId,
@@ -36,6 +39,7 @@ final readonly class GatewayPaymentDetails implements JsonSerializable
         public ?string $createdAt = null,
         public ?string $title = null,
         public bool $sandbox = false,
+        public array $refunds = [],
     ) {
     }
 
@@ -52,6 +56,27 @@ final readonly class GatewayPaymentDetails implements JsonSerializable
             createdAt: $this->createdAt,
             title: $this->title,
             sandbox: $this->sandbox,
+            refunds: $this->refunds,
+        );
+    }
+
+    /**
+     * @param GatewayRefundSummary[] $refunds
+     */
+    public function withRefunds(array $refunds): self
+    {
+        return new self(
+            provider: $this->provider,
+            gatewayId: $this->gatewayId,
+            rawStatus: $this->rawStatus,
+            statusLevel: $this->statusLevel,
+            amount: $this->amount,
+            currency: $this->currency,
+            method: $this->method,
+            createdAt: $this->createdAt,
+            title: $this->title,
+            sandbox: $this->sandbox,
+            refunds: $refunds,
         );
     }
 
@@ -71,6 +96,7 @@ final readonly class GatewayPaymentDetails implements JsonSerializable
             'createdAt' => $this->createdAt,
             'title' => $this->title,
             'sandbox' => $this->sandbox,
+            'refunds' => $this->refunds,
         ];
     }
 }

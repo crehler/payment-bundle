@@ -11,7 +11,8 @@ declare(strict_types=1);
 
 namespace Crehler\PaymentBundle\Application\Service;
 
-use Crehler\PaymentBundle\Domain\ValueObjects\RefundStatus;
+use Crehler\PaymentBundle\Domain\Constant\PaymentCustomFields;
+use Crehler\PaymentBundle\Domain\ValueObjects\{RefundOrigin, RefundStatus};
 use Crehler\PaymentBundle\Shared\EnhancedLogger;
 use Shopware\Core\Checkout\Cart\Price\Struct\CalculatedPrice;
 use Shopware\Core\Checkout\Order\Aggregate\OrderTransactionCapture\OrderTransactionCaptureEntity;
@@ -125,6 +126,9 @@ final class RefundSynchronizer
             'amount' => $amount,
             'externalReference' => $gatewayRefundId,
             'reason' => 'External refund (payment gateway)',
+            'customFields' => [
+                PaymentCustomFields::REFUND_ORIGIN => RefundOrigin::GATEWAY_SYNC->value,
+            ],
         ]], $context);
 
         // Reflect the refund onto the order-transaction state. Accepted refunds

@@ -27,6 +27,14 @@
             "production": "Production",
             "sandbox": "Sandbox"
         },
+        "refunds": {
+            "label": "Refunds (gateway)",
+            "empty": "No refunds recorded at the gateway.",
+            "completed": "Completed",
+            "in_progress": "In progress",
+            "failed": "Failed",
+            "cancelled": "Cancelled"
+        },
         "detailsUnavailable": "Could not load transaction details from the gateway."
     }
 }

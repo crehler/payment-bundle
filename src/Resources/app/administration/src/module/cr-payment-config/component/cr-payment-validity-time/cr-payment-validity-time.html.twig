@@ -1,0 +1,30 @@
+{% block cr_payment_validity_time %}
+<div class="cr-validity-time">
+    <mt-number-field
+        class="cr-validity-time__field"
+        v-model="hours"
+        :min="0"
+        :digits="0"
+        size="default"
+        :label="$tc('cr-payment-config.validityTime.hours')"
+    />
+    <mt-number-field
+        class="cr-validity-time__field"
+        v-model="minutes"
+        :min="0"
+        :max="59"
+        :digits="0"
+        size="default"
+        :label="$tc('cr-payment-config.validityTime.minutes')"
+    />
+    <mt-number-field
+        class="cr-validity-time__field"
+        v-model="seconds"
+        :min="0"
+        :max="59"
+        :digits="0"
+        size="default"
+        :label="$tc('cr-payment-config.validityTime.seconds')"
+    />
+</div>
+{% endblock %}

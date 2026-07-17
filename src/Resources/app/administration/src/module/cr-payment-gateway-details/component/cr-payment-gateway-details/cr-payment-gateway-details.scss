@@ -118,6 +118,15 @@
     &__mode { display: inline-flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 500; color: var(--cr-text); }
     &__mode-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--cr-brand); display: inline-block; }
 
+    &__muted { font-size: 14px; color: var(--cr-muted); }
+
+    // refunds (live gateway readout — complements the hourly reconciliation task)
+    &__row--refunds { align-items: start; }
+    &__refunds { display: flex; flex-direction: column; gap: 8px; }
+    &__refunds-item { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    &__refunds-amount { font-size: 14px; }
+    &__refunds-id { font-size: 12px; color: var(--cr-muted); }
+
     // footer
     &__footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; }
     &__caption { font-size: 12px; color: var(--cr-muted); }

@@ -27,6 +27,14 @@
             "production": "Produkcyjny",
             "sandbox": "Sandbox"
         },
+        "refunds": {
+            "label": "Zwroty (bramka)",
+            "empty": "Brak zwrotów zarejestrowanych w bramce.",
+            "completed": "Zrealizowany",
+            "in_progress": "W trakcie",
+            "failed": "Nieudany",
+            "cancelled": "Anulowany"
+        },
         "detailsUnavailable": "Nie udało się pobrać szczegółów transakcji z bramki."
     }
 }

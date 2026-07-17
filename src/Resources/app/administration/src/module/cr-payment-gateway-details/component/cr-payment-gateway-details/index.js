@@ -3,6 +3,10 @@ import './cr-payment-gateway-details.scss';
 
 const { Component } = Shopware;
 
+// Kept in sync with refundBadgeClass()/refundBadgeLabel() below — a status missing
+// from this list falls back to raw display instead of a translated badge.
+const KNOWN_REFUND_STATUS_LEVELS = ['completed', 'in_progress', 'failed', 'cancelled'];
+
 /**
  * Read-only "Szczegóły płatności (bramka)" section, injected into the order
  * "Szczegóły" tab's payment card. Loads provider-agnostic GatewayPaymentDetails for the
@@ -79,6 +83,14 @@ Component.register('cr-payment-gateway-details', {
                 ? this.$tc('cr-payment-gateway.mode.sandbox')
                 : this.$tc('cr-payment-gateway.mode.production');
         },
+
+        refunds() {
+            return this.details?.refunds ?? [];
+        },
+
+        hasRefunds() {
+            return this.refunds.length > 0;
+        },
     },
 
     created() {
@@ -142,6 +154,27 @@ Component.register('cr-payment-gateway-details', {
         formatTime(date) {
             const p = (n) => String(n).padStart(2, '0');
             return `${p(date.getHours())}:${p(date.getMinutes())}:${p(date.getSeconds())}`;
+        },
+
+        refundBadgeClass(refund) {
+            return {
+                completed: 'cr-gw__badge--success',
+                in_progress: 'cr-gw__badge--warning',
+                failed: 'cr-gw__badge--danger',
+                cancelled: 'cr-gw__badge--neutral',
+            }[refund.statusLevel] ?? 'cr-gw__badge--neutral';
+        },
+
+        refundBadgeLabel(refund) {
+            if (!KNOWN_REFUND_STATUS_LEVELS.includes(refund.statusLevel)) {
+                return refund.rawStatus || refund.statusLevel;
+            }
+
+            return this.$tc(`cr-payment-gateway.refunds.${refund.statusLevel}`);
+        },
+
+        refundAmountFormatted(refund) {
+            return this.currencyFilter(refund.amount, this.details?.currency || 'PLN');
         },
     },
 });
