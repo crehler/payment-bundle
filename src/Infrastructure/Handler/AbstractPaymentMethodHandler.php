@@ -16,9 +16,9 @@ use Crehler\PaymentBundle\Application\Port\Driven\{OrderTransactionRepositoryInt
 use Crehler\PaymentBundle\Application\Port\Driving\OrderTransactionServicePort;
 use Crehler\PaymentBundle\Application\Service\RefundStateReflector;
 use Crehler\PaymentBundle\Domain\Constant\PaymentCustomFields;
-use Crehler\PaymentBundle\Infrastructure\Configuration\PaymentBundleConfigService;
 use Crehler\PaymentBundle\Domain\Entity\OrderTransaction\OrderTransaction;
 use Crehler\PaymentBundle\Domain\ValueObjects\{RefundOrigin, RefundStatus};
+use Crehler\PaymentBundle\Infrastructure\Configuration\PaymentBundleConfigService;
 use Crehler\PaymentBundle\Shared\{EnhancedLogger, FinalizeTokenService, UrlSigner};
 use RuntimeException;
 use Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\{OrderTransactionEntity, OrderTransactionStateHandler};
@@ -266,9 +266,22 @@ abstract class AbstractPaymentMethodHandler extends AbstractPaymentHandler
                 context: $context
             );
 
+            // Provider rejected the payment (declined / error) → fail the transaction with a
+            // meaningful message instead of building a RedirectResponse from an empty URL.
+            if (!$paymentResult->isSuccess()) {
+                throw PaymentException::asyncProcessInterrupted($transaction->getOrderTransactionId(), $paymentResult->errorMessage ?? 'Payment was rejected by the provider.');
+            }
+
             // Payment initiated at the gateway → mark the transaction "in progress"; the
             // gateway notification then drives the final state (operator panel is the truth).
             $this->markInProgress($transaction->getOrderTransactionId(), $context);
+
+            // Immediate success without a redirect (e.g. card accepted directly, no 3DS):
+            // there is no gateway URL to send the browser to. Return null — the transaction
+            // stays "in progress" and the gateway webhook transitions it to "paid".
+            if ($paymentResult->redirectUrl === '') {
+                return null;
+            }
 
             return $this->createRedirectResponse(
                 request: $request,
@@ -386,17 +399,6 @@ abstract class AbstractPaymentMethodHandler extends AbstractPaymentHandler
 
             throw $e;
         }
-    }
-
-    /**
-     * @return string One of: 'checkout', 'separate', 'hidden'
-     */
-    private function resolveBlikInputPosition(OrderTransaction $orderTransaction): string
-    {
-        return $this->paymentBundleConfigService?->getBlikInputPositionForHandler(
-            handlerIdentifier: $orderTransaction->paymentMethod->handlerIdentifier,
-            salesChannelId: $orderTransaction->order->salesChannelId,
-        ) ?? 'checkout';
     }
 
     /**
@@ -556,6 +558,17 @@ abstract class AbstractPaymentMethodHandler extends AbstractPaymentHandler
             finishUrl: $finishUrl,
             errorUrl: $errorUrl,
         );
+    }
+
+    /**
+     * @return string One of: 'checkout', 'separate', 'hidden'
+     */
+    private function resolveBlikInputPosition(OrderTransaction $orderTransaction): string
+    {
+        return $this->paymentBundleConfigService?->getBlikInputPositionForHandler(
+            handlerIdentifier: $orderTransaction->paymentMethod->handlerIdentifier,
+            salesChannelId: $orderTransaction->order->salesChannelId,
+        ) ?? 'checkout';
     }
 
     /**

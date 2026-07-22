@@ -39,9 +39,11 @@ final class PaymentSubMethodSessionResolver implements PaymentSubMethodSessionRe
         }
 
         // Session empty → fall back to the choice saved on the customer account.
-        // The context switch persists the sub-method to the account for logged-in
-        // customers, so this gives parity with native paymentMethodId (auto-restored).
-        if ($customer !== null && !$customer->isGuest) {
+        // The context switch persists the sub-method to the account for any customer
+        // (logged-in or guest), so this gives parity with native paymentMethodId
+        // (auto-restored) — crucial for /checkout/finish/order, which does not re-fire
+        // the context switch and for guests may run on a fresh session/token.
+        if ($customer !== null) {
             return $this->customerPaymentSubMethodService
                 ->getSubMethod(customer: $customer, paymentMethodId: $paymentMethodId)
                 ?->subPaymentMethodId;

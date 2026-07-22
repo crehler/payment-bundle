@@ -77,9 +77,11 @@ class CustomerPaymentSubMethodRoute extends AbstractCustomerPaymentSubMethodRout
 
     private function resolveFromCustomer(string $paymentMethodId, SalesChannelContext $context): ?string
     {
+        // Guests persist their choice on the account too (see the context switch
+        // subscriber), so pre-selection must read it back for them as well.
         $customerEntity = $context->getCustomer();
 
-        if ($customerEntity === null || $customerEntity->getGuest()) {
+        if ($customerEntity === null) {
             return null;
         }
 

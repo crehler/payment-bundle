@@ -23,9 +23,10 @@ use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * Mirrors how Shopware persists the native paymentMethodId on a context switch:
- * the selected sub-method (bank) is written to the session, and for a logged-in
- * customer additionally saved on the account. This is the single entry point for
- * setting the sub-method — there is no dedicated write endpoint.
+ * the selected sub-method (bank) is written to the session, and whenever a customer
+ * is present on the context (logged-in or guest) additionally saved on the account.
+ * This is the single entry point for setting the sub-method — there is no dedicated
+ * write endpoint.
  */
 readonly class SalesChannelContextSwitchSubscriber implements EventSubscriberInterface
 {
@@ -57,8 +58,11 @@ readonly class SalesChannelContextSwitchSubscriber implements EventSubscriberInt
             $session->set(PaymentSubMethodSessionResolver::SESSION_KEY_PREFIX . $paymentMethodId, $subPaymentMethodId);
         }
 
+        // A guest is a real customer row (guest=1), so its choice is persisted on the
+        // account too — handle-payment reads it back via order.orderCustomer.customer.
+        // Only a fully anonymous context (no customer yet) has nowhere to persist.
         $customerEntity = $event->getSalesChannelContext()->getCustomer();
-        if ($customerEntity === null || $customerEntity->getGuest()) {
+        if ($customerEntity === null) {
             return;
         }
 

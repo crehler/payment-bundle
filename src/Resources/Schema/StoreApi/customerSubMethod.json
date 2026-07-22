@@ -10,7 +10,7 @@
       "get": {
         "tags": ["Crehler Payment", "Customer Sub-Method"],
         "summary": "Get customer's selected sub-method",
-        "description": "Returns the customer's currently selected payment sub-method. Resolved from the session first, then from the customer's account. Used to pre-select the previously chosen bank or e-wallet in the UI.",
+        "description": "Returns the customer's currently selected payment sub-method. Resolved from the session first, then from the customer's account (logged-in or guest). Used to pre-select the previously chosen bank or e-wallet in the UI.",
         "operationId": "crehlerCustomerSubMethodGet",
         "security": [{ "ApiKey": [], "ContextToken": [] }],
         "responses": {
@@ -25,7 +25,7 @@
             }
           },
           "403": {
-            "description": "Customer is not logged in"
+            "description": "No customer context (neither logged-in nor guest)"
           }
         }
       }
