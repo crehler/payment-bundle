@@ -83,7 +83,7 @@ abstract class AbstractPaymentNotificationSubscriber implements EventSubscriberI
                 context: $event->context,
             );
 
-            $event->setHandled(Response::HTTP_OK, 'OK');
+            $event->setHandled(Response::HTTP_OK, $this->successResponseBody());
         } catch (Throwable $exception) {
             $this->logger->error('Payment notification handling failed', [
                 'provider' => static::class,
@@ -129,5 +129,15 @@ abstract class AbstractPaymentNotificationSubscriber implements EventSubscriberI
         TransactionStateTransition $transition,
         Context $context,
     ): void {
+    }
+
+    /**
+     * Response body returned to the gateway once the notification was handled
+     * successfully. Default: 'OK'. Gateways with a specific confirmation
+     * protocol override this (e.g. Tpay classic notifications require 'TRUE').
+     */
+    protected function successResponseBody(): string
+    {
+        return 'OK';
     }
 }
