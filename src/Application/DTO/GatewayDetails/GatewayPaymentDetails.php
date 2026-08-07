@@ -22,6 +22,12 @@ use JsonSerializable;
  *
  * statusLevel normalises the raw gateway status to a badge level:
  * paid | pending | failed | refunded | unknown.
+ *
+ * $sandbox is deliberately REQUIRED and not defaulted. It used to default to false,
+ * so every provider simply omitted it and the admin reported real sandbox payments as
+ * production ones — an operator checking whether a transaction was real got the wrong
+ * answer (WT-910). A required parameter makes omitting it a compile-time error instead
+ * of a silent lie.
  */
 final readonly class GatewayPaymentDetails implements JsonSerializable
 {
@@ -33,12 +39,12 @@ final readonly class GatewayPaymentDetails implements JsonSerializable
         public string $gatewayId,
         public string $rawStatus,
         public string $statusLevel,
+        public bool $sandbox,
         public ?float $amount = null,
         public ?string $currency = null,
         public ?string $method = null,
         public ?string $createdAt = null,
         public ?string $title = null,
-        public bool $sandbox = false,
         public array $refunds = [],
     ) {
     }

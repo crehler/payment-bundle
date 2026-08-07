@@ -56,7 +56,24 @@ abstract class AbstractPaymentNotificationSubscriber implements EventSubscriberI
             return;
         }
 
-        if (!$this->verify($event)) {
+        // verify() is inside the guard, not outside it: a provider throwing here used to
+        // escape to the storefront controller, which answered the gateway with a full HTML
+        // error page instead of a short status (WT-910 — a non-UUID externalId blew up the
+        // transaction lookup done during verification). A failure to verify is a failure
+        // to verify, whichever way it surfaces.
+        try {
+            $verified = $this->verify($event);
+        } catch (Throwable $exception) {
+            $this->logger->error('Payment notification verification crashed', [
+                'provider' => static::class,
+                'exception' => $exception,
+            ]);
+            $event->setHandled(Response::HTTP_BAD_REQUEST, 'Invalid signature');
+
+            return;
+        }
+
+        if (!$verified) {
             $this->logger->warning('Payment notification failed verification', [
                 'provider' => static::class,
             ]);

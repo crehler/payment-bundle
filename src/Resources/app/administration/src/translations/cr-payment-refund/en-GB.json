@@ -56,6 +56,7 @@
         "history": {
             "title": "Refund history",
             "countOne": "1 refund",
+            "countFew": "{count} refunds",
             "countMany": "{count} refunds",
             "createdAt": "Date",
             "amount": "Amount",
@@ -63,7 +64,14 @@
             "reason": "Reason",
             "externalReference": "Gateway refund ID",
             "emptyTitle": "No refunds",
-            "emptyText": "Completed refunds will appear here."
+            "emptyText": "Completed refunds will appear here.",
+            "state": {
+                "open": "Open",
+                "inProgress": "In progress",
+                "completed": "Completed",
+                "cancelled": "Cancelled",
+                "failed": "Failed"
+            }
         },
         "refund": {
             "success": "The refund has been processed.",

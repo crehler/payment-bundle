@@ -52,7 +52,10 @@
                     </div>
                 </div>
                 <div class="cr-refund-hint">
-                    {{ $tc('cr-payment-refund.modal.maxAvailable', 0, { amount: formatCurrency(remainingAmount) }) }}
+                    {# Second argument is the plural CHOICE, not a value: a hard-coded 0
+                       selected a non-existent zero form and left the amount unrendered
+                       (WT-910). The message has one form, so the choice is 1. #}
+                    {{ $tc('cr-payment-refund.modal.maxAvailable', 1, { amount: formatCurrency(remainingAmount) }) }}
                 </div>
             </div>
             {% endblock %}

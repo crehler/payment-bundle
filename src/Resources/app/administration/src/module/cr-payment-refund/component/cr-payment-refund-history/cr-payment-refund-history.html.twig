@@ -34,7 +34,7 @@
                     {{ stateLabel(refund) }}
                 </span>
             </span>
-            <span class="cr-refund-history__reason">{{ refund.reason || '–' }}</span>
+            <span class="cr-refund-history__reason">{{ reasonLabel(refund) }}</span>
             <span class="cr-refund-history__gateway">{{ refund.externalReference || '–' }}</span>
         </div>
     </template>

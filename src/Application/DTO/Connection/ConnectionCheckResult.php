@@ -23,7 +23,13 @@ final readonly class ConnectionCheckResult
     ) {
     }
 
-    public static function ok(string $message): self
+    /**
+     * Empty message = let the admin render its own translated confirmation
+     * (cr-payment-config.test.success). Pass text only when the provider has something
+     * to add that the generic snippet cannot say, e.g. the number of channels returned —
+     * and then pass it translated, not hardcoded English.
+     */
+    public static function ok(string $message = ''): self
     {
         return new self(true, $message);
     }

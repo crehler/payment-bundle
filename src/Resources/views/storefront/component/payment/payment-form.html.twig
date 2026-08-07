@@ -21,9 +21,28 @@
         and selectedCardPayment %}
 
         <div class="crehler-external-payment-form crehler-external-card-form">
+            {#
+              The provider's card form is rendered BY PATH, resolved server-side from
+              CardFormTemplateProviderPort — not by overriding a Twig block here.
+
+              This template must sw_extends the Storefront template at the same relative
+              path as its own, and Shopware then flattens the inheritance chain: a plugin
+              extending THIS file at that path gets resolved to the Storefront one, so a
+              block override in the plugin never reached the output and the section
+              rendered empty (WT-910). One shared path also caps the block approach at a
+              single provider. Each provider now ships its form under its own namespace,
+              so there is nothing to collide.
+            #}
+            {% if checkoutBundleExt.cardFormTemplate %}
+                {% sw_include checkoutBundleExt.cardFormTemplate with {
+                    selectedCardPayment: selectedCardPayment
+                } %}
+            {% endif %}
+
             {% block crehler_payment_method_card_form %}
-                {# Override this block in provider templates (PayU, PayNow, etc.) #}
-                {# Variable 'selectedCardPayment' contains the selected card PaymentMethodEntity #}
+                {# DEPRECATED — kept for one release so a provider that has not migrated to
+                   CardFormTemplateProviderPort yet does not break. Never rendered from a
+                   plugin override (see above); remove once all providers ship the port. #}
             {% endblock %}
         </div>
     {% endif %}

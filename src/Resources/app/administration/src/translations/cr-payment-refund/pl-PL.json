@@ -56,6 +56,7 @@
         "history": {
             "title": "Historia zwrotów",
             "countOne": "1 zwrot",
+            "countFew": "{count} zwroty",
             "countMany": "{count} zwrotów",
             "createdAt": "Data",
             "amount": "Kwota",
@@ -63,7 +64,14 @@
             "reason": "Powód",
             "externalReference": "ID zwrotu w bramce",
             "emptyTitle": "Brak zwrotów",
-            "emptyText": "Wykonane zwroty pojawią się w tym miejscu."
+            "emptyText": "Wykonane zwroty pojawią się w tym miejscu.",
+            "state": {
+                "open": "Otwarty",
+                "inProgress": "W toku",
+                "completed": "Zakończony",
+                "cancelled": "Anulowany",
+                "failed": "Nieudany"
+            }
         },
         "refund": {
             "success": "Zwrot został przetworzony.",

@@ -11,16 +11,18 @@ declare(strict_types=1);
 
 namespace Crehler\PaymentBundle\Infrastructure\Subscriber;
 
+use Crehler\PaymentBundle\Application\Port\Driven\CardFormTemplateProviderPort;
 use Crehler\PaymentBundle\Infrastructure\Configuration\PaymentBundleConfigService;
 use Crehler\PaymentBundle\Infrastructure\Enum\PaymentHandlersEnum;
 use Crehler\PaymentBundle\Infrastructure\Port\ConsentProvider;
+use Crehler\PaymentBundle\Infrastructure\Resolver\PaymentMethodTypeResolver;
 use Crehler\PaymentBundle\Infrastructure\StoreApi\CustomerSavedCard\Abstract\AbstractSavedCardTokenRoute;
 use Crehler\PaymentBundle\Infrastructure\StoreApi\CustomerSavedCard\RouteSavedCardTokenRoute;
 use Crehler\PaymentBundle\Infrastructure\StoreApi\CustomerSubMethods\Abstract\AbstractCustomerPaymentSubMethodRoute;
 use Crehler\PaymentBundle\Infrastructure\StoreApi\CustomerSubMethods\CustomerPaymentSubMethodRoute;
 use Crehler\PaymentBundle\Infrastructure\StoreApi\PaymentSubMethods\Abstract\AbstractPaymentSubMethodRoute;
 use Crehler\PaymentBundle\Infrastructure\StoreApi\PaymentSubMethods\PaymentSubMethodRoute;
-use Crehler\PaymentBundle\Infrastructure\Struct\{CheckoutConfirmPageExtensionStruct, ConsentStruct, PaymentMethodTypeStruct};
+use Crehler\PaymentBundle\Infrastructure\Struct\{CheckoutConfirmPageExtensionStruct, ConsentStruct};
 use Crehler\PaymentBundle\Shared\AmountFormat;
 use Shopware\Core\Checkout\Payment\PaymentMethodEntity;
 use Shopware\Core\Framework\Struct\Collection;
@@ -29,10 +31,6 @@ use Shopware\Storefront\Page\Account\Order\{AccountEditOrderPage, AccountEditOrd
 use Shopware\Storefront\Page\Checkout\Confirm\{CheckoutConfirmPage, CheckoutConfirmPageLoadedEvent};
 use Symfony\Component\DependencyInjection\Attribute\{Autoconfigure, Autowire, AutowireIterator};
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-
-use function str_ends_with;
-use function str_starts_with;
-use function strtolower;
 
 /**
  * Universal checkout page subscriber.
@@ -50,8 +48,11 @@ final readonly class CheckoutConfirmPageLoadedSubscriber implements EventSubscri
         private AbstractSavedCardTokenRoute $cardTokenRoute,
         private AmountFormat $amountFormat,
         private PaymentBundleConfigService $bundleConfigService,
+        private PaymentMethodTypeResolver $paymentMethodTypeResolver,
         #[AutowireIterator(ConsentProvider::class)]
         private iterable $consentProviders,
+        #[AutowireIterator(CardFormTemplateProviderPort::class)]
+        private iterable $cardFormTemplateProviders,
     ) {
     }
 
@@ -98,6 +99,14 @@ final readonly class CheckoutConfirmPageLoadedSubscriber implements EventSubscri
         $blikInputPosition = $this->bundleConfigService->getBlikInputPosition($currentPaymentMethod, $salesChannelId);
         $checkoutExtension = $checkoutExtension->withBundleConfig($embedCardForm, $blikInputPosition);
 
+        // Card form is provider-specific and rendered by path, not by overriding a shared
+        // Twig block — see CardFormTemplateProviderPort for why the block never worked.
+        if ($checkoutExtension->isCardPayment && $embedCardForm) {
+            $checkoutExtension = $checkoutExtension->withCardFormTemplate(
+                $this->resolveCardFormTemplate($currentPaymentMethod->getHandlerIdentifier()),
+            );
+        }
+
         // Add extensions to each payment method
         foreach ($page->getPaymentMethods()->getElements() as $payMethod) {
             $this->addPaymentMethodExtensions(
@@ -112,7 +121,7 @@ final readonly class CheckoutConfirmPageLoadedSubscriber implements EventSubscri
 
     private function createCheckoutExtension(PaymentMethodEntity $paymentMethod): CheckoutConfirmPageExtensionStruct
     {
-        $handlerType = $this->resolveHandlerType($paymentMethod->getHandlerIdentifier());
+        $handlerType = $this->paymentMethodTypeResolver->handlerType($paymentMethod->getHandlerIdentifier());
 
         return match ($handlerType) {
             PaymentHandlersEnum::BANK_HANDLER,
@@ -124,15 +133,15 @@ final readonly class CheckoutConfirmPageLoadedSubscriber implements EventSubscri
         };
     }
 
-    private function resolveHandlerType(?string $handlerIdentifier): ?PaymentHandlersEnum
+    private function resolveCardFormTemplate(?string $handlerIdentifier): ?string
     {
         if ($handlerIdentifier === null) {
             return null;
         }
 
-        foreach (PaymentHandlersEnum::cases() as $handlerEnum) {
-            if (str_ends_with(strtolower($handlerIdentifier), $handlerEnum->value)) {
-                return $handlerEnum;
+        foreach ($this->cardFormTemplateProviders as $provider) {
+            if ($provider->supports($handlerIdentifier)) {
+                return $provider->getTemplate();
             }
         }
 
@@ -176,51 +185,12 @@ final readonly class CheckoutConfirmPageLoadedSubscriber implements EventSubscri
         );
 
         // Add payment type struct for frontend data attributes
-        $paymentTypeStruct = $this->createPaymentTypeStruct($paymentMethod);
+        $paymentTypeStruct = $this->paymentMethodTypeResolver->struct($paymentMethod);
 
         $this->addPaymentExtension(paymentMethod: $paymentMethod, extension: $paymentSubMethods);
         $this->addPaymentExtension(paymentMethod: $paymentMethod, extension: $customerSelectedSubMethod);
         $this->addPaymentExtension(paymentMethod: $paymentMethod, extension: $customerSavedCardTokens);
         $paymentMethod->addExtension($paymentTypeStruct->getApiAlias(), $paymentTypeStruct);
-    }
-
-    private function createPaymentTypeStruct(PaymentMethodEntity $paymentMethod): PaymentMethodTypeStruct
-    {
-        $handlerIdentifier = $paymentMethod->getHandlerIdentifier();
-        $handlerType = $this->resolveHandlerType($handlerIdentifier);
-
-        return new PaymentMethodTypeStruct(
-            isBlik: $handlerType === PaymentHandlersEnum::BLIK_HANDLER,
-            isCard: $handlerType === PaymentHandlersEnum::CARD_HANDLER,
-            isBank: $handlerType === PaymentHandlersEnum::BANK_HANDLER,
-            isEwallet: $handlerType === PaymentHandlersEnum::EWALLET_HANDLER,
-            isDeferred: $handlerType === PaymentHandlersEnum::DEFERED_HANDLER,
-            hasSubmethods: $this->hasSubmethods($handlerType),
-            isCrehlerPayment: $this->isCrehlerPaymentMethod($handlerIdentifier),
-        );
-    }
-
-    private function isCrehlerPaymentMethod(?string $handlerIdentifier): bool
-    {
-        if ($handlerIdentifier === null) {
-            return false;
-        }
-
-        return str_starts_with($handlerIdentifier, 'Crehler\\');
-    }
-
-    private function hasSubmethods(?PaymentHandlersEnum $handlerType): bool
-    {
-        if ($handlerType === null) {
-            return false;
-        }
-
-        return match ($handlerType) {
-            PaymentHandlersEnum::BANK_HANDLER,
-            PaymentHandlersEnum::EWALLET_HANDLER,
-            PaymentHandlersEnum::DEFERED_HANDLER => true,
-            default => false,
-        };
     }
 
     private function addPaymentExtension(PaymentMethodEntity $paymentMethod, object $extension): void

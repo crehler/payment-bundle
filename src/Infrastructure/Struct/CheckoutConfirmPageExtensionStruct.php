@@ -17,6 +17,12 @@ final class CheckoutConfirmPageExtensionStruct extends Struct
 {
     public const API_ALIAS = 'cr_payment_checkout_confirm_extension';
 
+    /**
+     * @param string|null $cardFormTemplate Twig path of the selected provider's card form,
+     *                                      resolved from CardFormTemplateProviderPort. Null
+     *                                      when the selected method is not a card or the
+     *                                      provider ships no form.
+     */
     public function __construct(
         public readonly bool $isBankPayment = false,
         public readonly bool $isBlikPayment = false,
@@ -24,6 +30,7 @@ final class CheckoutConfirmPageExtensionStruct extends Struct
         public readonly ?ConsentStruct $consent = null,
         public readonly bool $embedCardForm = false,
         public readonly string $blikInputPosition = 'checkout',
+        public readonly ?string $cardFormTemplate = null,
     ) {
     }
 
@@ -41,6 +48,7 @@ final class CheckoutConfirmPageExtensionStruct extends Struct
             $consent,
             $this->embedCardForm,
             $this->blikInputPosition,
+            $this->cardFormTemplate,
         );
     }
 
@@ -53,6 +61,20 @@ final class CheckoutConfirmPageExtensionStruct extends Struct
             $this->consent,
             $embedCardForm,
             $blikInputPosition,
+            $this->cardFormTemplate,
+        );
+    }
+
+    public function withCardFormTemplate(?string $cardFormTemplate): self
+    {
+        return new self(
+            $this->isBankPayment,
+            $this->isBlikPayment,
+            $this->isCardPayment,
+            $this->consent,
+            $this->embedCardForm,
+            $this->blikInputPosition,
+            $cardFormTemplate,
         );
     }
 }

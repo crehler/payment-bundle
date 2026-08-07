@@ -13,7 +13,7 @@ namespace Crehler\PaymentBundle\Infrastructure\StoreApi\Blik;
 
 use Crehler\PaymentBundle\Application\DTO\BlikPayment\BlikPaymentRequestDTO;
 use Crehler\PaymentBundle\Application\Service\BlikPayment\BlikPaymentService;
-use Crehler\PaymentBundle\Domain\Exception\DomainException;
+use Crehler\PaymentBundle\Domain\Exception\{DomainException, PaymentMethodNotFoundException};
 use Crehler\PaymentBundle\Infrastructure\StoreApi\Blik\Abstract\AbstractBlikPaymentRoute;
 use Crehler\PaymentBundle\Infrastructure\Struct\BlikPaymentStruct;
 use Crehler\PaymentBundle\Shared\EnhancedLogger;
@@ -115,6 +115,18 @@ final class BlikPaymentRoute extends AbstractBlikPaymentRoute
                     success: true,
                     redirectUrl: $responseDTO->redirectUrl,
                     orderId: $responseDTO->orderId
+                )
+            );
+        } catch (PaymentMethodNotFoundException $e) {
+            // Rejected client input, not a gateway problem: the message describes the
+            // caller's own paymentMethodId, so it is safe to return and far more useful
+            // than a generic failure. No order was created at this point.
+            $this->logger->info($e->getMessage(), ['exception' => $e]);
+
+            return new BlikPaymentRouteResponse(
+                new BlikPaymentStruct(
+                    success: false,
+                    error: $e->getMessage(),
                 )
             );
         } catch (DomainException $e) {

@@ -32,6 +32,10 @@ Thumbs.db
 # committed, so install / produkcja = `composer install` + `assets:install`
 # + `theme:compile` z gotowymi assetami, BEZ Node na serwerze. Chunki storefrontu
 # mają deterministyczne nazwy (webpackChunkName), więc są reprodukowalne.
+#
+# Wyjątek: katalog poniżej to byproduct `shopware-cli extension build` (entry
+# storefront-admin), a nie artefakt do wydania — tak samo ignorowany w PayNow.
+/src/Storefront/
 
 # Local agent/session dirs
 .claude/
