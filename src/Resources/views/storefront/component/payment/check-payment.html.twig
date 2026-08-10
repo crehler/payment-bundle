@@ -8,10 +8,17 @@
     and 'crehler' in paymentMethod.formattedHandlerIdentifier|lower
 %}
 
+{# Waiting window comes from the shared plugin config (Ustawienia wyświetlania →
+   „Czas oczekiwania na potwierdzenie płatności"), resolved per provider by
+   CheckoutFinishPageLoadedSubscriber. The default only covers a page rendered
+   without that extension. #}
+{% set crPaymentWaiting = page.extensions[constant('Crehler\\PaymentBundle\\Infrastructure\\Struct\\CheckPaymentWaitingStruct::API_ALIAS')] %}
+
 {% set checkPaymentOptions = {
      orderId: page.order.id,
      failUrl: path('frontend.cr.payment.change-method', { 'orderId': page.order.id }),
      checkUrl: path('frontend.cr.payment.check'),
+     waitingTime: crPaymentWaiting.waitingTimeMs|default(120000),
      textSuccess: "payment.checkPayment.successText"|trans|sw_sanitize,
      subtitleSuccess: "payment.checkPayment.successSubtitle"|trans|sw_sanitize,
      textTimeout: "payment.checkPayment.failText"|trans|sw_sanitize,
@@ -22,7 +29,6 @@
      subtitleMismatch: "payment.checkPayment.mismatchSubtitle"|trans|sw_sanitize,
 } %}
 
-    {# waitingTime: config('CrehlerPayNowPayment.config.waitingTime') trzeba zrobić wspólny config dla wszystkich wtyczek#}
 <div data-crehler-check-payment="true"
      data-crehler-check-payment-options='{{ checkPaymentOptions|json_encode }}'>
 

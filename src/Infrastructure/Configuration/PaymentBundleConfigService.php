@@ -18,6 +18,9 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 use function count;
 use function explode;
+use function is_numeric;
+use function max;
+use function min;
 use function str_starts_with;
 
 /**
@@ -91,6 +94,48 @@ final readonly class PaymentBundleConfigService
     }
 
     /**
+     * How long the storefront should wait for the gateway to confirm the payment,
+     * in MILLISECONDS (the unit the storefront plugins expect; the operator configures
+     * seconds).
+     */
+    public function getWaitingTimeMs(PaymentMethodEntity $paymentMethod, ?string $salesChannelId = null): int
+    {
+        return $this->getWaitingTimeMsForHandler($paymentMethod->getHandlerIdentifier(), $salesChannelId);
+    }
+
+    /**
+     * Same as getWaitingTimeMs(), for callers that only have the handler identifier
+     * (e.g. an order transaction loaded without the full PaymentMethodEntity).
+     */
+    public function getWaitingTimeMsForHandler(string $handlerIdentifier, ?string $salesChannelId = null): int
+    {
+        $configDomain = $this->resolveConfigDomainForHandlerIdentifier($handlerIdentifier);
+
+        if ($configDomain === null) {
+            return $this->defaultWaitingTimeMs();
+        }
+
+        $configured = $this->systemConfigService->get(
+            $configDomain . '.' . BundleConfigField::WAITING_TIME->value,
+            $salesChannelId
+        );
+
+        // Null means the key was never seeded — possible when the bundle is updated via
+        // composer before the provider plugin's update runs BundleConfigDefaultsInstaller.
+        // Falling back to the declared default keeps the storefront working meanwhile.
+        if (!is_numeric($configured)) {
+            return $this->defaultWaitingTimeMs();
+        }
+
+        $seconds = max(
+            BundleConfigField::WAITING_TIME_MIN,
+            min((int) $configured, BundleConfigField::WAITING_TIME_MAX)
+        );
+
+        return $seconds * 1000;
+    }
+
+    /**
      * Get any bundle config value for given payment method.
      */
     public function getConfigValue(
@@ -123,6 +168,11 @@ final readonly class PaymentBundleConfigService
         return $handlerIdentifier === null
             ? null
             : $this->resolveConfigDomainForHandlerIdentifier($handlerIdentifier);
+    }
+
+    private function defaultWaitingTimeMs(): int
+    {
+        return (int) BundleConfigField::WAITING_TIME->defaultValue() * 1000;
     }
 
     private function resolveConfigDomainForHandlerIdentifier(string $handlerIdentifier): ?string

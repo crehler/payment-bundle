@@ -13,6 +13,8 @@ namespace Crehler\PaymentBundle\Infrastructure\Storefront\Blik;
 
 use Crehler\PaymentBundle\Application\Service\BlikAuthorizeService;
 use Crehler\PaymentBundle\Application\Service\Security\OrderOwnershipGuard;
+use Crehler\PaymentBundle\Infrastructure\Configuration\PaymentBundleConfigService;
+use Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionEntity;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Shopware\Storefront\Controller\StorefrontController;
 use Shopware\Storefront\Page\Checkout\Confirm\CheckoutConfirmPageLoader;
@@ -31,6 +33,7 @@ final class BlikPaymentAuthorizeRoute extends StorefrontController
         private readonly CheckoutConfirmPageLoader $finishPageLoader,
         private readonly BlikAuthorizeService $blikAuthorizeService,
         private readonly OrderOwnershipGuard $orderOwnershipGuard,
+        private readonly PaymentBundleConfigService $bundleConfigService,
     ) {
     }
 
@@ -62,7 +65,9 @@ final class BlikPaymentAuthorizeRoute extends StorefrontController
         // Object-level authorization: the transaction's order must belong to the
         // current customer + sales channel. Respond 404 (not 403) so a foreign
         // transaction id cannot be used to confirm existence / read order data.
-        if (!$this->orderOwnershipGuard->isTransactionOwnedByContext($orderTransaction, $salesChannelContext)) {
+        if ($orderTransaction === null
+            || !$this->orderOwnershipGuard->isTransactionOwnedByContext($orderTransaction, $salesChannelContext)
+        ) {
             throw new NotFoundHttpException();
         }
 
@@ -76,8 +81,31 @@ final class BlikPaymentAuthorizeRoute extends StorefrontController
                 'page' => $page,
                 'target' => $target,
                 'authorized' => $authorized,
+                'waitingTimeMs' => $this->resolveWaitingTimeMs($orderTransaction, $salesChannelContext),
             ]
         );
+    }
+
+    /**
+     * How long this page polls before it gives up, from the provider's shared config.
+     * The transaction's own payment method is authoritative; the session context is a
+     * fallback for a transaction loaded without that association.
+     */
+    private function resolveWaitingTimeMs(
+        OrderTransactionEntity $orderTransaction,
+        SalesChannelContext $salesChannelContext,
+    ): int {
+        $salesChannelId = $salesChannelContext->getSalesChannelId();
+        $handlerIdentifier = $orderTransaction->getPaymentMethod()?->getHandlerIdentifier();
+
+        if ($handlerIdentifier === null) {
+            return $this->bundleConfigService->getWaitingTimeMs(
+                $salesChannelContext->getPaymentMethod(),
+                $salesChannelId,
+            );
+        }
+
+        return $this->bundleConfigService->getWaitingTimeMsForHandler($handlerIdentifier, $salesChannelId);
     }
 
     /**

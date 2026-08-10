@@ -22,6 +22,22 @@ enum BundleConfigField: string
     case EMBED_CARD_FORM = 'crPaymentEmbedCardForm';
     case BLIK_INPUT_POSITION = 'crPaymentBlikInputPosition';
     case TRANSACTION_DESCRIPTION = 'crPaymentTransactionDescription';
+    case WAITING_TIME = 'crPaymentWaitingTime';
+    /**
+     * Lower bound for WAITING_TIME, in seconds. Below this the storefront would give up
+     * before a normal pay-by-link confirmation has any chance to arrive.
+     *
+     * @var int
+     */
+    public const WAITING_TIME_MIN = 30;
+
+    /**
+     * Upper bound for WAITING_TIME, in seconds — past this the customer is just staring
+     * at a spinner; the order is not lost either way, the gateway notification still books it.
+     *
+     * @var int
+     */
+    public const WAITING_TIME_MAX = 900;
 
     /**
      * Get the configuration element definition for Shopware admin.
@@ -117,6 +133,25 @@ enum BundleConfigField: string
                     ],
                 ],
             ],
+            self::WAITING_TIME => [
+                'name' => $fullName,
+                'type' => 'int',
+                'config' => [
+                    'label' => [
+                        'en-GB' => 'Payment confirmation waiting time (seconds)',
+                        'de-DE' => 'Wartezeit auf die Zahlungsbestätigung (Sekunden)',
+                        'pl-PL' => 'Czas oczekiwania na potwierdzenie płatności (sekundy)',
+                    ],
+                    'helpText' => [
+                        'en-GB' => 'How long the storefront waits for the gateway to confirm the payment before it stops polling and offers to change the payment method. Does not cancel the payment — a later confirmation still books the order.',
+                        'de-DE' => 'Wie lange die Storefront auf die Zahlungsbestätigung des Gateways wartet, bevor sie das Polling beendet und einen Wechsel der Zahlungsart anbietet. Die Zahlung wird dadurch nicht storniert — eine spätere Bestätigung bucht die Bestellung weiterhin.',
+                        'pl-PL' => 'Ile czasu storefront czeka na potwierdzenie płatności z bramki, zanim przerwie odpytywanie i zaproponuje zmianę metody płatności. Nie anuluje to płatności — późniejsze potwierdzenie i tak zaksięguje zamówienie.',
+                    ],
+                    'defaultValue' => self::WAITING_TIME->defaultValue(),
+                    'min' => self::WAITING_TIME_MIN,
+                    'max' => self::WAITING_TIME_MAX,
+                ],
+            ],
         };
     }
 
@@ -124,12 +159,15 @@ enum BundleConfigField: string
      * Default value seeded into system_config on plugin install (BundleConfigDefaultsInstaller)
      * and declared as defaultValue in the admin element. Kept here so both stay in sync.
      */
-    public function defaultValue(): bool|string
+    public function defaultValue(): bool|int|string
     {
         return match ($this) {
             self::EMBED_CARD_FORM => false,
             self::BLIK_INPUT_POSITION => 'checkout',
             self::TRANSACTION_DESCRIPTION => '{{ orderNumber }}',
+            // 120 s is what the storefront waited before this became configurable, so an
+            // update changes nothing until an operator decides otherwise.
+            self::WAITING_TIME => 120,
         };
     }
 

@@ -3,7 +3,7 @@
     "description": "Crehler Payment Bundle - shared payment functionality for Polish payment providers",
     "type": "shopware-bundle",
     "license": "proprietary",
-    "version": "6.2.0",
+    "version": "6.3.0",
     "authors": [
         {
             "name": "Crehler Sp. z o. o.",

@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- **Payment-confirmation waiting time is configurable again.** How long the storefront
+  polls for the gateway confirmation before it stops and offers to change the payment
+  method was hardcoded at 120 s in two places. It is now the shared
+  `{PluginName}.config.crPaymentWaitingTime` field (seconds, default 120, range 30–900)
+  on the "Ustawienia wyświetlania" card, so it appears in every provider plugin without
+  a change on their side. Read it through `PaymentBundleConfigService::getWaitingTimeMs()`,
+  which resolves the owning plugin, applies the range and returns milliseconds.
+  This is a new config field, so it needs a **minor** release.
+
 ## 6.0.2
 
 ### Changed

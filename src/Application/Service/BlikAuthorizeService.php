@@ -26,7 +26,9 @@ final readonly class BlikAuthorizeService
     {
         return $this->orderTransactionRepository->getOrderTransactionWithAssociations(
             orderTransactionId: $orderTransactionId,
-            associations: ['order', 'order.orderCustomer'],
+            // paymentMethod: the authorize page reads the provider's shared config
+            // (waiting window) off the handler identifier.
+            associations: ['order', 'order.orderCustomer', 'paymentMethod'],
             context: $context
         );
     }
