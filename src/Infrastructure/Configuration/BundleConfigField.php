@@ -121,9 +121,9 @@ enum BundleConfigField: string
                         'pl-PL' => 'Opis transakcji (wysyłany do bramki)',
                     ],
                     'helpText' => [
-                        'en-GB' => 'Human-readable description shown on the gateway. Available tokens: {{ orderNumber }}, {{ customerName }}, {{ salesChannelName }}.',
-                        'de-DE' => 'Lesbare Beschreibung, die im Gateway angezeigt wird. Verfügbare Platzhalter: {{ orderNumber }}, {{ customerName }}, {{ salesChannelName }}.',
-                        'pl-PL' => 'Czytelny opis pokazywany w bramce. Dostępne tokeny: {{ orderNumber }}, {{ customerName }}, {{ salesChannelName }}.',
+                        'en-GB' => 'Human-readable description shown on the gateway. Available tokens: {{ orderNumber }}, {{ customerName }}, {{ salesChannelName }}, {{ orderId }}, {{ orderIds }}. {{ orderIds }} is the id of this order unless a plugin extends it into a list of related orders. Keep it short — gateways limit this field (Tpay: 128 bytes) and an over-long description is cut off.',
+                        'de-DE' => 'Lesbare Beschreibung, die im Gateway angezeigt wird. Verfügbare Platzhalter: {{ orderNumber }}, {{ customerName }}, {{ salesChannelName }}, {{ orderId }}, {{ orderIds }}. {{ orderIds }} enthält die Id dieser Bestellung, sofern kein Plugin sie zu einer Liste zugehöriger Bestellungen erweitert. Kurz halten — Gateways begrenzen dieses Feld (Tpay: 128 Bytes) und schneiden zu lange Beschreibungen ab.',
+                        'pl-PL' => 'Czytelny opis pokazywany w bramce. Dostępne tokeny: {{ orderNumber }}, {{ customerName }}, {{ salesChannelName }}, {{ orderId }}, {{ orderIds }}. {{ orderIds }} to identyfikator tego zamówienia, chyba że wtyczka rozszerzy go do listy zamówień powiązanych. Trzymaj krótko — bramki ograniczają to pole (Tpay: 128 bajtów), a zbyt długi opis zostanie ucięty.',
                     ],
                     'defaultValue' => '{{ orderNumber }}',
                     'placeholder' => [

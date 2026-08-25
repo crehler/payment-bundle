@@ -4,6 +4,20 @@
 
 ### Added
 
+- **`{{ orderId }}` and `{{ orderIds }}` tokens in the transaction description.** Integrations that
+  read the DAL key orders by their `_uniqueIdentifier`, which gateways never saw because the
+  description only carried the order number — leaving no shared key between a payment and the
+  order it belongs to. `{{ orderIds }}` resolves to that same single id until a plugin extends it
+  into a list of related orders.
+
+  **Strictly opt-in — the default description is unchanged.** The field's `defaultValue` and the
+  renderer's fallback both stay `{{ orderNumber }}`, and the defaults installer never overwrites a
+  value an operator already set, so no shop starts sending an order id to its gateway until someone
+  puts the token into the template.
+- **`TransactionDescriptionTokensEvent`** — extension point letting a plugin overwrite the resolved
+  tokens. The bundle only knows a single order; a wider grouping (split deliveries, for example) is
+  owned by the plugin implementing it. Listeners should guard on `usesToken()` so a token the
+  template never mentions costs nothing.
 - **Payment-confirmation waiting time is configurable again.** How long the storefront
   polls for the gateway confirmation before it stops and offers to change the payment
   method was hardcoded at 120 s in two places. It is now the shared
@@ -12,6 +26,18 @@
   a change on their side. Read it through `PaymentBundleConfigService::getWaitingTimeMs()`,
   which resolves the owning plugin, applies the range and returns milliseconds.
   This is a new config field, so it needs a **minor** release.
+
+### Fixed
+
+- **The rendered description can no longer exceed the gateway's limit.** `render()` accepts an
+  optional `$maxLengthBytes`; over-long output is cut with `mb_strcut()` and logged as a warning.
+  Gateways validate this field with `strlen()`, so the limit counts bytes — Polish characters cost
+  two of them. Previously a long template configured in the admin made the gateway reject every
+  transaction on the sales channel.
+- **Stray separators are stripped with a Unicode-aware pattern.** The separator set contains
+  multibyte characters (en dash, em dash, middle dot), and `trim()` matches its charlist byte by
+  byte — so a description ending in an unrelated multibyte character lost its last byte and reached
+  the gateway as malformed UTF-8.
 
 ## 6.0.2
 

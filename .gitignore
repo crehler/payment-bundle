@@ -27,6 +27,7 @@ Thumbs.db
 
 # Cache
 .php-cs-fixer.cache
+.phpunit.result.cache
 
 # Build artifacts. Compiled admin (Vite) AND storefront (webpack) output IS
 # committed, so install / produkcja = `composer install` + `assets:install`
