@@ -3,6 +3,9 @@
 {% block base_content %}
     {% set orderTransaction = page.extensions['order_transaction'] %}
 
+    {# Shared plugin config (Ustawienia wyświetlania → „Czas oczekiwania na
+       potwierdzenie płatności"), resolved by BlikPaymentAuthorizeRoute:
+       options.waitingTime. #}
     {% set options = {
         orderId: orderTransaction.order.id,
         orderTransactionId: orderTransaction.id,
@@ -11,8 +14,6 @@
         checkUrl: path('frontend.cr.payment.check'),
         textSuccess: "blik.success"|trans|sw_sanitize,
         textFailed: "blik.failed"|trans|sw_sanitize,
-        {# Shared plugin config (Ustawienia wyświetlania → „Czas oczekiwania na
-           potwierdzenie płatności"), resolved by BlikPaymentAuthorizeRoute. #}
         waitingTime: waitingTimeMs|default(120000),
         redirectTo: target ?: path('frontend.checkout.finish.page', { 'orderId': orderTransaction.order.id })
     }%}
