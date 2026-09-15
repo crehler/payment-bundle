@@ -53,8 +53,8 @@ final class NotificationController extends AbstractController
         $this->eventDispatcher->dispatch($event, PaymentNotificationReceivedEvent::EVENT_NAME);
 
         if (!$event->isHandled()) {
-            // Do not log the request body/query/headers here: the notify URL carries
-            // the _sw_payment_token and gateway payloads may contain payment secrets.
+            // Do not log the request body/query/headers here: gateway payloads may
+            // contain payment secrets or personal data.
             $this->logger->warning('Payment notification was not handled by any provider');
 
             return new Response('No handler found for this notification', Response::HTTP_BAD_REQUEST);

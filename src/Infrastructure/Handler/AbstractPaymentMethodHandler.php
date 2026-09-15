@@ -17,6 +17,7 @@ use Crehler\PaymentBundle\Application\Port\Driving\OrderTransactionServicePort;
 use Crehler\PaymentBundle\Application\Service\RefundStateReflector;
 use Crehler\PaymentBundle\Domain\Constant\PaymentCustomFields;
 use Crehler\PaymentBundle\Domain\Entity\OrderTransaction\OrderTransaction;
+use Crehler\PaymentBundle\Domain\Enum\PaymentType;
 use Crehler\PaymentBundle\Domain\ValueObjects\{RefundOrigin, RefundStatus};
 use Crehler\PaymentBundle\Infrastructure\Configuration\PaymentBundleConfigService;
 use Crehler\PaymentBundle\Shared\{EnhancedLogger, FinalizeTokenService, UrlSigner};
@@ -38,13 +39,18 @@ use Symfony\Component\Routing\RouterInterface;
 use Symfony\Contracts\Service\Attribute\Required;
 use Throwable;
 
+use function bin2hex;
 use function in_array;
 use function is_array;
 use function is_string;
 use function parse_str;
 use function parse_url;
+use function random_bytes;
 use function round;
 use function sprintf;
+use function str_contains;
+use function strtolower;
+use function strtoupper;
 
 /**
  * Abstract base class for payment method handlers.
@@ -258,6 +264,15 @@ abstract class AbstractPaymentMethodHandler extends AbstractPaymentHandler
                 orderTransaction: $orderTransaction
             );
 
+            // The channel can disappear between rendering the checkout and paying — the
+            // customer sat on the page while the gateway took it offline, or the cart total
+            // dropped below its minimum. For a gateway that cannot pick for the customer
+            // that has to end in a message, not in the provider blowing up on a null
+            // several layers down (ING throws InvalidArgumentException there).
+            if (static::requiresGatewayChannel() && ($paymentSubMethodId === null || $paymentSubMethodId === '')) {
+                throw PaymentException::asyncProcessInterrupted($transaction->getOrderTransactionId(), 'No payment channel selected for a method that requires one.');
+            }
+
             $paymentResult = $this->processPayment(
                 request: $request,
                 transaction: $transaction,
@@ -279,14 +294,15 @@ abstract class AbstractPaymentMethodHandler extends AbstractPaymentHandler
             // Immediate success without a redirect (e.g. card accepted directly, no 3DS):
             // there is no gateway URL to send the browser to. Return null — the transaction
             // stays "in progress" and the gateway webhook transitions it to "paid".
-            if ($paymentResult->redirectUrl === '') {
+            if ($paymentResult->redirectUrl === '' && $paymentResult->redirectMethod === null) {
                 return null;
             }
 
             return $this->createRedirectResponse(
                 request: $request,
                 orderId: $orderTransaction->order->id,
-                redirectUrl: $paymentResult->redirectUrl
+                redirectUrl: $paymentResult->redirectUrl,
+                paymentResult: $paymentResult,
             );
         } catch (Throwable $e) {
             $this->logger->critical(
@@ -306,6 +322,48 @@ abstract class AbstractPaymentMethodHandler extends AbstractPaymentHandler
         // Intentional no-op: the final transaction state is driven by the gateway
         // webhook (POST /payment/notification), not by the browser return. Nothing
         // to do here — and never log the _sw_payment_token / return URL (payment secret).
+    }
+
+    /**
+     * The payment family this handler serves.
+     *
+     * Static and abstract on purpose: the bundle reads it off the class named in
+     * payment_method.handler_identifier without instantiating anything, and a provider
+     * that forgets to declare it cannot build the container. This replaced inferring the
+     * family from the class-name suffix, which returned "unknown" in silence and cost us
+     * the wallet and instalment channel lists in checkout.
+     */
+    abstract public static function paymentType(): PaymentType;
+
+    /**
+     * Whether this method's channels (banks, wallets, BNPL providers) come from the
+     * gateway.
+     *
+     * NOT "whether there are channels" — that count is runtime data and depends on the
+     * cart amount, currency, the merchant's contract and channel outages. Declare true
+     * whenever a sub-method provider serves this family, even if the gateway currently
+     * returns a single channel; the storefront decides what to render from the count it
+     * actually received (none, one auto-selected, or a chooser).
+     */
+    abstract public static function usesGatewayChannels(): bool;
+
+    /**
+     * Whether the gateway refuses the payment without a channel picked in the shop.
+     *
+     * A separate question from usesGatewayChannels(), and the answer differs per gateway
+     * for the very same family: Tpay takes `channelId = 0` and PayU an empty `value`, both
+     * of which mean "show your own bank list", so leaving the choice to the operator is a
+     * working flow there. ING has no such fallback — its adapter throws when no
+     * paymentMethodCode was selected.
+     *
+     * Defaults to false, i.e. the tolerant behaviour every existing handler relies on.
+     * Override with true only when the gateway cannot pick for the customer; the storefront
+     * then blocks the order button until a channel is chosen, and pay() below rejects the
+     * transaction with a message rather than letting the provider fail on a null.
+     */
+    public static function requiresGatewayChannel(): bool
+    {
+        return false;
     }
 
     /**
@@ -383,10 +441,14 @@ abstract class AbstractPaymentMethodHandler extends AbstractPaymentHandler
             }
 
             // No BLIK code -> redirect to the gateway (via transition page on Storefront).
+            // Pass $paymentResult so a non-GET action keeps its method/body here too:
+            // without it the action degrades to a plain GET and the Store API guard
+            // never fires, because both branches key off $paymentResult->redirectMethod.
             return $this->createRedirectResponse(
                 request: $request,
                 orderId: $orderTransaction->order->id,
-                redirectUrl: $paymentResult->redirectUrl
+                redirectUrl: $paymentResult->redirectUrl,
+                paymentResult: $paymentResult,
             );
         } catch (Throwable $e) {
             $this->logger->critical(
@@ -446,10 +508,18 @@ abstract class AbstractPaymentMethodHandler extends AbstractPaymentHandler
         );
     }
 
-    protected function createRedirectResponse(Request $request, string $orderId, string $redirectUrl): RedirectResponse
-    {
+    protected function createRedirectResponse(
+        Request $request,
+        string $orderId,
+        string $redirectUrl,
+        ?PaymentResult $paymentResult = null,
+    ): RedirectResponse {
         // For Store API (headless) - return direct provider URL
         if ($this->isStoreApiRequest($request)) {
+            if ($paymentResult?->redirectMethod !== null && strtoupper($paymentResult->redirectMethod) !== 'GET') {
+                throw new RuntimeException('Non-GET payment actions require the Storefront transition flow.');
+            }
+
             return new RedirectResponse($redirectUrl);
         }
 
@@ -468,6 +538,30 @@ abstract class AbstractPaymentMethodHandler extends AbstractPaymentHandler
             'sig' => $this->urlSigner->sign($redirectUrl),
             'logo' => $this->getProviderLogo(),
         ];
+
+        if ($paymentResult?->redirectMethod !== null && strtoupper($paymentResult->redirectMethod) !== 'GET') {
+            if (!$request->hasSession()) {
+                throw new RuntimeException('A session is required for a non-GET payment action.');
+            }
+
+            // The transition page replays the action as an HTML form, and a form can
+            // only carry application/x-www-form-urlencoded. Reject any other content
+            // type here rather than letting the page submit an empty form and silently
+            // drop the body the gateway expects.
+            $actionBody = (string) $paymentResult->redirectContentBodyRaw;
+            if ($actionBody !== '' && !str_contains(strtolower((string) $paymentResult->redirectContentType), 'application/x-www-form-urlencoded')) {
+                throw new RuntimeException(sprintf('Unsupported payment action content type "%s": the Storefront transition flow supports application/x-www-form-urlencoded only.', (string) $paymentResult->redirectContentType));
+            }
+
+            $actionToken = bin2hex(random_bytes(16));
+            $request->getSession()->set('cr_payment_action_' . $actionToken, [
+                'method' => strtoupper($paymentResult->redirectMethod),
+                'contentType' => $paymentResult->redirectContentType,
+                'body' => $paymentResult->redirectContentBodyRaw,
+            ]);
+            $parameters['actionToken'] = $actionToken;
+            $parameters['actionSig'] = $this->urlSigner->sign($orderId . '|' . $actionToken);
+        }
 
         $transitionUrl = $this->router->generate(
             name: $this->getTransitionRouteName(),
@@ -493,9 +587,9 @@ abstract class AbstractPaymentMethodHandler extends AbstractPaymentHandler
         return $request->headers->has('sw-access-key');
     }
 
-    protected function buildNotifyUrl(OrderTransaction $orderTransaction): string
+    protected function buildNotifyUrl(): string
     {
-        return $this->finalizeTokenService->buildUrl(orderTransaction: $orderTransaction);
+        return $this->finalizeTokenService->buildNotificationUrl();
     }
 
     /**
@@ -509,7 +603,7 @@ abstract class AbstractPaymentMethodHandler extends AbstractPaymentHandler
         ?PaymentTransactionStruct $transaction = null,
     ): array {
         return [
-            'notifyUrl' => $this->buildNotifyUrl($orderTransaction),
+            'notifyUrl' => $this->buildNotifyUrl(),
             'returnUrl' => $this->buildBrowserReturnUrl($orderTransaction, $transaction),
         ];
     }

@@ -1,0 +1,149 @@
+{#
+  The channel widget for one payment method: none, one, or a chooser.
+
+  Rendered from exactly two places — the storefront controller that loads channels over
+  AJAX, and nothing else. It used to be inlined in payment-method.html.twig, which meant
+  the gateway had to answer during SSR before the checkout could paint. Keeping the markup
+  in one partial is the reason the controller returns HTML instead of JSON: the three
+  branches below (and the hidden input in the single-channel one) would otherwise have to
+  be reimplemented in JavaScript, giving two renderers to keep in sync.
+
+  Expects: submethods, selectedSubPaymentMethodId, payment, crPaymentContract.
+#}
+{% set submethodsCount = submethods|length %}
+
+{#
+  Which method this channel belongs to.
+
+  The widget sits inside Shopware's changePaymentForm, so switching the payment method
+  serialises whatever channel is still checked here — a channel of the method being LEFT.
+  The context switch then validated it against the method being switched TO and threw
+  "The parameter paymentSubMethod is invalid": picking a wallet channel and then changing
+  the method was a hard 400.
+
+  The value alone cannot say which method it was chosen for, so it says it explicitly and
+  the subscriber ignores a pairing that no longer matches.
+#}
+{% if submethodsCount > 0 %}
+    <input type="hidden" name="paymentSubMethodFor" value="{{ payment.id }}">
+{% endif %}
+
+{% if submethodsCount == 0 %}
+    {# The gateway offers nothing right now: it is down, the merchant's contract covers no
+       channel for this family, or the cart is below every channel's minimum (ING serves
+       instalments from 300 PLN). The method stays visible and says so — hiding the row
+       after the page has painted moves everything below it, and a customer who used this
+       method last week reads a vanished row as a broken shop, not as a temporary state.
+       The amount case is also actionable: told the method is unavailable for this cart,
+       the customer can still add to it. The JS disables the radio so nothing can be
+       submitted. #}
+    <div class="payment-sub-methods-unavailable" role="status">
+        {{ 'payment.subMethods.unavailable'|trans|sw_sanitize }}
+    </div>
+{% elseif submethodsCount == 1 %}
+    {# Single channel — auto-selected, nothing to choose. The hidden input is what makes
+       the choice reach the context switch, so this branch is not cosmetic. #}
+    {% set singleSubmethod = submethods|first %}
+    <input type="hidden"
+           name="paymentSubMethod"
+           value="{{ singleSubmethod.providerId }}">
+    <div class="payment-sub-methods-selected payment-sub-methods-selected--readonly">
+        <div class="payment-sub-methods-selected-info">
+            <div class="payment-sub-methods-selected-image-container">
+                <img class="payment-sub-methods-selected-image"
+                     alt="{{ singleSubmethod.name|sw_sanitize }}"
+                     src="{{ singleSubmethod.mediaUrl }}">
+            </div>
+            <span class="payment-sub-methods-selected-name">{{ singleSubmethod.name }}</span>
+        </div>
+    </div>
+{% else %}
+    {% set pluginOptions = {
+        activeClass: "payment-sub-methods--has-value",
+        optionsSelector: ".payment-sub-methods-options",
+        selectedSelector: ".payment-sub-methods-selected",
+        changeButtonSelector: ".payment-sub-methods-selected-change",
+        changeButtonSelectorActiveClass: "payment-sub-methods-selected-change--active",
+        selectedClass: "is-selected"
+    } %}
+
+    {# A saved choice is only honoured while the gateway still offers it: the cart may have
+       changed since, and a pre-checked channel that is no longer on the list would be sent
+       to the gateway and rejected there. #}
+    {% set validSelectedSubMethod = null %}
+    {% for submethod in submethods %}
+        {% if submethod.providerId is same as(selectedSubPaymentMethodId) %}
+            {% set validSelectedSubMethod = submethod %}
+        {% endif %}
+    {% endfor %}
+
+    <div class="payment-sub-methods {% if validSelectedSubMethod %}payment-sub-methods--has-value{% endif %}"
+         data-crehler-payment-bank-selector
+         data-payment-bank-selector-plugin-options='{{ pluginOptions|json_encode }}'>
+
+        <div class="payment-sub-methods-options">
+            {% for submethod in submethods %}
+                <div class="payment-sub-method {% if submethod.providerId is same as(selectedSubPaymentMethodId) %}is-selected{% endif %}"
+                     data-submethod-id="{{ submethod.providerId }}">
+                    <input type="radio"
+                           id="paymentSubMethod{{ payment.technicalName }}{{ submethod.providerId }}"
+                           name="paymentSubMethod"
+                           value="{{ submethod.providerId }}"
+                           {# No .payment-method-input here. That class is Shopware's
+                              FormAutoSubmitPlugin trigger, so carrying it made every bank
+                              click submit changePaymentForm and reload the entire confirm
+                              page. The channel is written over AJAX now. It is also the
+                              selector Shopware's add-payment-info GA event reads, which a
+                              sub-method radio has no business answering. #}
+                           class="form-check-input payment-sub-method-input"
+                           {% if submethod.providerId is same as(selectedSubPaymentMethodId) %}checked{% endif %}>
+                    <label class="form-check-label payment-sub-method-label"
+                           for="paymentSubMethod{{ payment.technicalName }}{{ submethod.providerId }}">
+                        <span class="payment-sub-method-label-name">{{ submethod.name }}</span>
+                        <img class="payment-sub-method-label-image"
+                             alt="{{ submethod.name|sw_sanitize }}"
+                             src="{{ submethod.mediaUrl }}"
+                             loading="lazy">
+                    </label>
+                </div>
+            {% endfor %}
+        </div>
+
+        {% if validSelectedSubMethod %}
+            <div class="payment-sub-methods-selected">
+                <div class="payment-sub-methods-selected-header">
+                    <span class="payment-sub-methods-selected-label">
+                        {{ 'payment.checkoutConfirmSelectedLabel'|trans|sw_sanitize }}
+                    </span>
+                </div>
+                <div class="payment-sub-methods-selected-info">
+                    <div class="payment-sub-methods-selected-image-container">
+                        <img class="payment-sub-methods-selected-image"
+                             alt="{{ validSelectedSubMethod.name|sw_sanitize }}"
+                             src="{{ validSelectedSubMethod.mediaUrl }}">
+                    </div>
+                    <span class="payment-sub-methods-selected-name">{{ validSelectedSubMethod.name }}</span>
+                </div>
+                <button type="button" class="payment-sub-methods-selected-change">
+                    <span class="payment-sub-methods-selected-change-label">
+                        {{ 'payment.checkoutConfirmChangeLabel'|trans|sw_sanitize }}
+                    </span>
+                    <span class="payment-sub-methods-cancel-change-label">
+                        {{ 'payment.checkoutConfirmCancelChangeLabel'|trans|sw_sanitize }}
+                    </span>
+                    {% sw_icon 'arrow-down' style {
+                        class: 'confirm-checkout-chevron',
+                        size: 'xs',
+                        pack : 'solid'
+                    } %}
+                </button>
+            </div>
+        {% elseif crPaymentContract is defined and crPaymentContract and crPaymentContract.requiresGatewayChannel %}
+            {# This gateway will not pick for the customer, so say what is missing before
+               they hit an order button that the JS has already disabled. #}
+            <div class="payment-sub-methods-required" role="status">
+                {{ 'payment.subMethods.required'|trans|sw_sanitize }}
+            </div>
+        {% endif %}
+    </div>
+{% endif %}

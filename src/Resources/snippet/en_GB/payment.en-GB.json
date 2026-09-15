@@ -12,7 +12,7 @@
     "checkPayment": {
       "waitingText": "Waiting for payment confirmation...",
       "successText": "Payment has been confirmed",
-      "successSubtitle": "Thank you! You'll be redirected in a moment.",
+      "successSubtitle": "Thank you! Your order is paid.",
       "failText": "Payment waiting time has expired",
       "failSubtitle": "We did not receive payment confirmation in time.",
       "declinedText": "Payment failed",
@@ -29,7 +29,14 @@
       "countdown": "Redirecting in",
       "second": "second",
       "seconds": "seconds",
-      "redirectingNow": "Redirecting..."
+      "redirectingNow": "Redirecting...",
+      "redirectFailed": "We could not start the payment. Please go back to the shop and try again, or choose a different payment method."
+    },
+    "subMethods": {
+      "loading": "Loading available payment options...",
+      "unavailable": "This payment method is temporarily unavailable for this order. Please choose another one.",
+      "required": "Pick one of the options above to continue.",
+      "noScript": "This payment method needs JavaScript enabled. Turn it on or choose another method."
     }
   }
 }

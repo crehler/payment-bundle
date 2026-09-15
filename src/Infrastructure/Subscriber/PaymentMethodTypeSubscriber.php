@@ -12,25 +12,26 @@ declare(strict_types=1);
 namespace Crehler\PaymentBundle\Infrastructure\Subscriber;
 
 use Crehler\PaymentBundle\Infrastructure\Extension\PaymentMethodExtension;
-use Crehler\PaymentBundle\Infrastructure\Resolver\PaymentMethodTypeResolver;
+use Crehler\PaymentBundle\Infrastructure\Resolver\PaymentMethodContractResolver;
 use Shopware\Core\Checkout\Payment\PaymentMethodEntity;
 use Shopware\Core\Framework\DataAbstractionLayer\Event\EntityLoadedEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
- * Populates the crPaymentType runtime field on PaymentMethodEntity.
+ * Populates the crPaymentContract runtime field on PaymentMethodEntity.
  *
- * This subscriber enriches payment method entities with boolean flags
- * indicating the payment type (BLIK, card, bank, etc.), making it easier
- * for frontend applications to identify payment methods without relying on names.
+ * Attaches what the method's handler declares — its PaymentType and whether its channels
+ * come from the gateway — so the storefront and the Store API read one answer instead of
+ * re-deriving it. Methods not served by a Crehler handler get no extension at all rather
+ * than a struct full of falses, so "not ours" and "ours, and none of these things" stay
+ * distinguishable.
  *
- * The classification itself lives in PaymentMethodTypeResolver — shared with
- * CheckoutConfirmPageLoadedSubscriber and the BLIK Store API route.
+ * Resolution is pure PHP against the handler class; no I/O on entity load.
  */
 final readonly class PaymentMethodTypeSubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private PaymentMethodTypeResolver $paymentMethodTypeResolver,
+        private PaymentMethodContractResolver $contractResolver,
     ) {
     }
 
@@ -48,11 +49,14 @@ final readonly class PaymentMethodTypeSubscriber implements EventSubscriberInter
                 continue;
             }
 
-            // Add to extensions array - this is how RuntimeField data is accessed in API
-            $paymentMethod->addExtension(
-                PaymentMethodExtension::EXTENSION_NAME,
-                $this->paymentMethodTypeResolver->struct($paymentMethod),
-            );
+            $contract = $this->contractResolver->resolve($paymentMethod);
+
+            if ($contract === null) {
+                continue;
+            }
+
+            // addExtension is how a Runtime field surfaces in the API response.
+            $paymentMethod->addExtension(PaymentMethodExtension::EXTENSION_NAME, $contract);
         }
     }
 }

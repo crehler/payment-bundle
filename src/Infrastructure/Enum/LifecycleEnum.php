@@ -13,7 +13,7 @@ namespace Crehler\PaymentBundle\Infrastructure\Enum;
 
 use Crehler\PaymentBundle\Infrastructure\Util\Lifecycle\Activate\PaymentMethodActivator;
 use Crehler\PaymentBundle\Infrastructure\Util\Lifecycle\Deactivate\PaymentMethodDeactivator;
-use Crehler\PaymentBundle\Infrastructure\Util\Lifecycle\Install\{BundleConfigDefaultsInstaller, BundleMigrationInstaller, CustomFieldCreator, PaymentMethodInstaller, RefundOriginCustomFieldInstaller};
+use Crehler\PaymentBundle\Infrastructure\Util\Lifecycle\Install\{BundleConfigDefaultsInstaller, BundleMigrationInstaller, PaymentMethodInstaller, RefundOriginCustomFieldInstaller};
 use Crehler\PaymentBundle\Infrastructure\Util\Lifecycle\Update\PaymentMethodUpdater;
 
 enum LifecycleEnum: string
@@ -33,7 +33,6 @@ enum LifecycleEnum: string
                 // LifecycleManager::update, which iterates the INSTALL list).
                 BundleMigrationInstaller::class,
                 PaymentMethodInstaller::class,
-                CustomFieldCreator::class,
                 // Seeds shared bundle config defaults (display settings + transaction
                 // description) into system_config. Runs on install and update.
                 BundleConfigDefaultsInstaller::class,

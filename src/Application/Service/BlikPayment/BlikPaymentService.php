@@ -13,10 +13,11 @@ namespace Crehler\PaymentBundle\Application\Service\BlikPayment;
 
 use Crehler\PaymentBundle\Application\DTO\BlikPayment\{BlikPaymentRequestDTO, BlikPaymentResponseDTO};
 use Crehler\PaymentBundle\Application\Port\Driven\OrderTransactionRepositoryInterface;
+use Crehler\PaymentBundle\Domain\Enum\PaymentType;
 use Crehler\PaymentBundle\Domain\Exception\{EmptyCartException, PaymentMethodNotFoundException};
 use Crehler\PaymentBundle\Domain\Repository\OrderRepositoryInterface;
 use Crehler\PaymentBundle\Domain\ValueObjects\BlikPayment;
-use Crehler\PaymentBundle\Infrastructure\Resolver\PaymentMethodTypeResolver;
+use Crehler\PaymentBundle\Infrastructure\Resolver\PaymentMethodContractResolver;
 use Crehler\PaymentBundle\Shared\EnhancedLogger;
 use Shopware\Core\Checkout\Cart\Cart;
 use Shopware\Core\Checkout\Cart\SalesChannel\{AbstractCartOrderRoute, CartOrderRoute, CartService};
@@ -46,7 +47,7 @@ final readonly class BlikPaymentService
         private AbstractCartOrderRoute $cartOrderRoute,
         #[Autowire(service: 'sales_channel.payment_method.repository')]
         private SalesChannelRepository $salesChannelPaymentMethodRepository,
-        private PaymentMethodTypeResolver $paymentMethodTypeResolver,
+        private PaymentMethodContractResolver $contractResolver,
         private PaymentProcessor $paymentProcessor,
         private RouterInterface $router,
         private EnhancedLogger $logger,
@@ -176,7 +177,7 @@ final readonly class BlikPaymentService
             throw new PaymentMethodNotFoundException('Payment method is not available in this sales channel');
         }
 
-        if (!$this->paymentMethodTypeResolver->isBlik($paymentMethod)) {
+        if ($this->contractResolver->resolve($paymentMethod)?->type !== PaymentType::BLIK) {
             throw new PaymentMethodNotFoundException('Payment method is not a BLIK method');
         }
 

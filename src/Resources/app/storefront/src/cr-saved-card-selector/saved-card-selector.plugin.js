@@ -10,6 +10,11 @@ import Plugin from 'src/plugin-system/plugin.class';
  * Gateway-specific tokenization (RSA encryption, fingerprinting, SDK iframes)
  * stays in the provider plugin; it only needs to render the dropdown markup
  * with the data attributes below.
+ *
+ * Contract for provider plugins: selecting a card dispatches a bubbling `change`
+ * event on the token input. Listen for it instead of observing the input's `value`
+ * attribute — the assignment below writes the IDL property, which no attribute
+ * observer sees.
  */
 export default class CrSavedCardSelectorPlugin extends Plugin {
     static options = {
@@ -54,6 +59,12 @@ export default class CrSavedCardSelectorPlugin extends Plugin {
 
         if (this._tokenInput) {
             this._tokenInput.value = token;
+
+            // Assigning .value sets the IDL property only — it does not reflect into the
+            // `value` content attribute, so a MutationObserver watching that attribute
+            // never fires. Provider plugins need an explicit signal to react to the
+            // selection (e.g. hiding an embedded card form), hence the bubbling event.
+            this._tokenInput.dispatchEvent(new Event('change', { bubbles: true }));
         }
 
         this._renderSelection(token, maskedNumber, brandImgUrl);

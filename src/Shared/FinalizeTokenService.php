@@ -50,19 +50,21 @@ final class FinalizeTokenService
     ) {
     }
 
-    public function buildUrl(OrderTransaction $orderTransaction): string
+    /**
+     * Build the provider callback URL.
+     *
+     * Provider webhooks authenticate their own payload (signature/checksum) and
+     * resolve the transaction from the gateway id in the body. The Shopware
+     * payment JWT used by the pre-CB-332 notification pipeline is therefore both
+     * redundant and harmful here: it exposes a payment secret and can exceed a
+     * gateway's callback URL limit (ING Pay: 300 characters).
+     */
+    public function buildNotificationUrl(): string
     {
-        $token = $this->tokenFactory->generateToken(new TokenStruct(
-            id: null,
-            token: null,
-            paymentMethodId: $orderTransaction->paymentMethod->id,
-            transactionId: $orderTransaction->id,
-            finishUrl: null,
-            expires: 288000,
-            errorUrl: null
-        ));
-
-        return $this->assembleReturnUrl(token: $token);
+        return $this->router->generate(
+            'crehler.bundle.payment.notification',
+            referenceType: UrlGeneratorInterface::ABSOLUTE_URL,
+        );
     }
 
     public function parseToken(string $token): TokenStruct
@@ -130,15 +132,6 @@ final class FinalizeTokenService
         }
 
         return hash_equals($this->computeSignature($orderTransactionId, $expiresAt), $sig);
-    }
-
-    private function assembleReturnUrl(string $token): string
-    {
-        return $this->router->generate(
-            'crehler.bundle.payment.notification',
-            ['_sw_payment_token' => $token],
-            UrlGeneratorInterface::ABSOLUTE_URL
-        );
     }
 
     private function computeSignature(string $orderTransactionId, int $expiresAt): string

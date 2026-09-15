@@ -22,6 +22,12 @@ PluginManager.register(
 );
 
 PluginManager.register(
+    'CrPaymentSubMethods',
+    () => import(/* webpackChunkName: "cr-payment-sub-methods" */ './cr-payment-sub-methods/payment-sub-methods.plugin'),
+    '[data-cr-payment-sub-methods]'
+);
+
+PluginManager.register(
     'CrehlerCheckPayment',
     () => import(/* webpackChunkName: "cr-check-payment-status" */ './cr-check-payment-status/check-payment-status'),
     '[data-crehler-check-payment]'

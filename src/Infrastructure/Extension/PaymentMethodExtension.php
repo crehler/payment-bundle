@@ -17,17 +17,17 @@ use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\{ApiAware, Runtime};
 use Shopware\Core\Framework\DataAbstractionLayer\Field\ObjectField;
 
 /**
- * Extends PaymentMethodDefinition with runtime field for payment type information.
+ * Adds the crPaymentContract runtime field to payment_method.
  *
- * This extension adds a `crPaymentType` field that contains boolean flags
- * indicating the payment type (BLIK, card, bank, etc.), making it easier
- * for frontend applications to identify payment methods.
+ * Carries PaymentMethodContractStruct: the payment family and whether the method's
+ * channels come from the gateway, both declared by the handler. ApiAware, so storefront
+ * templates and Store API consumers read the same answer.
  *
- * The field is populated at runtime by PaymentMethodTypeSubscriber.
+ * Populated on entity load by PaymentMethodTypeSubscriber.
  */
 class PaymentMethodExtension extends EntityExtension
 {
-    public const EXTENSION_NAME = 'crPaymentType';
+    public const EXTENSION_NAME = 'crPaymentContract';
 
     public function extendFields(FieldCollection $collection): void
     {

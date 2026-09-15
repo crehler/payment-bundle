@@ -1,16 +1,20 @@
 {% sw_extends '@Storefront/storefront/component/payment/payment-method.html.twig' %}
 
 {% block component_payment_method_field %}
-    {% set crPaymentType = payment.extensions[constant('Crehler\\PaymentBundle\\Infrastructure\\Struct\\PaymentMethodTypeStruct::API_ALIAS')] %}
+    {# EXTENSION_NAME, not the struct's API_ALIAS. addExtension() keys the extensions array
+       by the DAL field name (crPaymentContract); API_ALIAS (cr_payment_contract) is only the
+       apiAlias inside the serialised object. Reading the alias here silently yielded null on
+       every method, so this block — and the BLIK field and the card attribute below — never
+       rendered at all. #}
+    {% set crPaymentContract = payment.extensions[constant('Crehler\\PaymentBundle\\Infrastructure\\Extension\\PaymentMethodExtension::EXTENSION_NAME')] %}
+    {# Four more data attributes used to be emitted here (bank, ewallet, deferred and a
+       sub-method flag) and were read by nothing — no JS, PHP or Twig in the bundle or in
+       the four provider plugins. Dropped. #}
     <div class="cr-payment-wrapper"
-         {% if crPaymentType %}
+         {% if crPaymentContract %}
              data-cr-payment="true"
-             {% if crPaymentType.isBlik %}data-cr-blik="true"{% endif %}
-             {% if crPaymentType.isBank %}data-cr-bank="true"{% endif %}
-             {% if crPaymentType.isCard %}data-cr-card="true"{% endif %}
-             {% if crPaymentType.isEwallet %}data-cr-ewallet="true"{% endif %}
-             {% if crPaymentType.isDeferred %}data-cr-deferred="true"{% endif %}
-             {% if crPaymentType.hasSubmethods %}data-cr-has-submethods="true"{% endif %}
+             {% if crPaymentContract.type is same as(constant('Crehler\\PaymentBundle\\Domain\\Enum\\PaymentType::BLIK')) %}data-cr-blik="true"{% endif %}
+             {% if crPaymentContract.type is same as(constant('Crehler\\PaymentBundle\\Domain\\Enum\\PaymentType::CARD')) %}data-cr-card="true"{% endif %}
          {% endif %}>
         {{ parent() }}
     </div>
@@ -20,13 +24,13 @@
     {{ parent() }}
 
     {% set checkoutBundleExt = page.extensions[constant('Crehler\\PaymentBundle\\Infrastructure\\Struct\\CheckoutConfirmPageExtensionStruct::API_ALIAS')] %}
-    {% set crPaymentType = payment.extensions[constant('Crehler\\PaymentBundle\\Infrastructure\\Struct\\PaymentMethodTypeStruct::API_ALIAS')] %}
+    {% set crPaymentContract = payment.extensions[constant('Crehler\\PaymentBundle\\Infrastructure\\Extension\\PaymentMethodExtension::EXTENSION_NAME')] %}
 
     {# BLIK handler - show input on checkout page if blikInputPosition is 'checkout' #}
     {% if checkoutBundleExt
         and checkoutBundleExt.isBlikPayment
         and checkoutBundleExt.blikInputPosition == 'checkout'
-        and crPaymentType and crPaymentType.isBlik
+        and crPaymentContract and crPaymentContract.type is same as(constant('Crehler\\PaymentBundle\\Domain\\Enum\\PaymentType::BLIK'))
         and context.paymentMethod.id is same as(payment.id) %}
         {# No guest guard: BLIK is a code-entry payment that works for guests too, and the
            card/bank rows have no such guard — the asymmetric guard hid the field on guest checkout. #}
@@ -36,109 +40,64 @@
     {# Card form is now rendered in payment-form.html.twig after all payment methods #}
     {# See crehler_payment_external_card_form_content block #}
 
-    {# Bank/EWallet/Deferred handler - submethods selector #}
-    {% if payment.extensions[constant('Crehler\\PaymentBundle\\Infrastructure\\StoreApi\\PaymentSubMethods\\PaymentSubMethodRouteResponse::API_ALIAS')]
-        and checkoutBundleExt
-        and checkoutBundleExt.isBankPayment
+    {# Channel selector for any method whose handler declares that its channels come from
+       the gateway. This used to hang off a page-level flag named after the bank family and
+       derived from the handler class name, so WalletHandler and InstallmentsHandler never
+       reached it.
+
+       The channels themselves are no longer rendered here. Doing so meant the gateway had
+       to answer before the checkout could paint — four identical POSTs per render at ING,
+       synchronously, with a slow gateway multiplying straight into TTFB. What is left is an
+       empty container; the JS plugin fills it from the storefront controller, which renders
+       the same partial the count branches always lived in. #}
+    {% if crPaymentContract
+        and crPaymentContract.usesGatewayChannels
         and context.paymentMethod.id is same as(payment.id) %}
-        {% set selectedSubPaymentMethodId = payment.extensions[constant('Crehler\\PaymentBundle\\Infrastructure\\StoreApi\\CustomerSubMethods\\PaymentCustomerSubMethodsRouteResponse::API_ALIAS')].subPaymentMethodId %}
-
-        {% set pluginOptions = {
-            activeClass: "payment-sub-methods--has-value",
-            optionsSelector: ".payment-sub-methods-options",
-            selectedSelector: ".payment-sub-methods-selected",
-            changeButtonSelector: ".payment-sub-methods-selected-change",
-            changeButtonSelectorActiveClass: "payment-sub-methods-selected-change--active",
-            selectedClass: "is-selected"
-        } %}
-
-        {% set submethods = payment.extensions[constant('Crehler\\PaymentBundle\\Infrastructure\\StoreApi\\PaymentSubMethods\\PaymentSubMethodRouteResponse::API_ALIAS')].elements %}
-        {% set submethodsCount = submethods|length %}
-
-        {# Single submethod - auto-select with info display, no change option #}
-        {% if submethodsCount == 1 %}
-            {% set singleSubmethod = submethods|first %}
-            <input type="hidden"
-                   name="paymentSubMethod"
-                   value="{{ singleSubmethod.providerId }}">
-            <div class="payment-sub-methods-selected payment-sub-methods-selected--readonly">
-                <div class="payment-sub-methods-selected-info">
-                    <div class="payment-sub-methods-selected-image-container">
-                        <img class="payment-sub-methods-selected-image"
-                             alt="{{ singleSubmethod.name|sw_sanitize }}"
-                             src="{{ singleSubmethod.mediaUrl }}">
-                    </div>
-                    <span class="payment-sub-methods-selected-name">{{ singleSubmethod.name }}</span>
-                </div>
-            </div>
-        {% elseif submethodsCount > 1 %}
-            {# Multiple submethods - show selector UI #}
-            {# Validate that selectedSubPaymentMethodId exists in available submethods #}
-            {% set validSelectedSubMethod = null %}
-            {% for submethod in submethods %}
-                {% if submethod.providerId is same as(selectedSubPaymentMethodId) %}
-                    {% set validSelectedSubMethod = submethod %}
-                {% endif %}
-            {% endfor %}
-
-            <div class="payment-sub-methods {% if validSelectedSubMethod %}payment-sub-methods--has-value{% endif %}"
-                 data-crehler-payment-bank-selector
-                 data-payment-bank-selector-plugin-options='{{ pluginOptions|json_encode }}'>
-
-                <div class="payment-sub-methods-options">
-                    {% for submethod in submethods %}
-                        <div class="payment-sub-method {% if submethod.providerId is same as(selectedSubPaymentMethodId) %}is-selected{% endif %}"
-                             data-submethod-id="{{ submethod.providerId }}">
-                            <input type="radio"
-                                   id="paymentSubMethod{{ payment.technicalName }}{{ submethod.providerId }}"
-                                   name="paymentSubMethod"
-                                   value="{{ submethod.providerId }}"
-                                   class="form-check-input payment-method-input payment-sub-method-input"
-                                   {% if submethod.providerId is same as(selectedSubPaymentMethodId) %}checked{% endif %}>
-                            <label class="form-check-label payment-sub-method-label"
-                                   for="paymentSubMethod{{ payment.technicalName }}{{ submethod.providerId }}">
-                                <span class="payment-sub-method-label-name">{{ submethod.name }}</span>
-                                <img class="payment-sub-method-label-image"
-                                     alt="{{ submethod.name|sw_sanitize }}"
-                                     src="{{ submethod.mediaUrl }}"
-                                     loading="lazy">
-                            </label>
-                        </div>
-                    {% endfor %}
-                </div>
-
-                {% if validSelectedSubMethod %}
-                    <div class="payment-sub-methods-selected">
-                        <div class="payment-sub-methods-selected-header">
-                            <span class="payment-sub-methods-selected-label">
-                                {{ 'payment.checkoutConfirmSelectedLabel'|trans|sw_sanitize }}
-                            </span>
-                        </div>
-                        <div class="payment-sub-methods-selected-info">
-                            <div class="payment-sub-methods-selected-image-container">
-                                <img class="payment-sub-methods-selected-image"
-                                     alt="{{ validSelectedSubMethod.name|sw_sanitize }}"
-                                     src="{{ validSelectedSubMethod.mediaUrl }}">
-                            </div>
-                            <span class="payment-sub-methods-selected-name">{{ validSelectedSubMethod.name }}</span>
-                        </div>
-                        <button type="button" class="payment-sub-methods-selected-change">
-                            <span class="payment-sub-methods-selected-change-label">
-                                {{ 'payment.checkoutConfirmChangeLabel'|trans|sw_sanitize }}
-                            </span>
-                            <span class="payment-sub-methods-cancel-change-label">
-                                {{ 'payment.checkoutConfirmCancelChangeLabel'|trans|sw_sanitize }}
-                            </span>
-                            {% sw_icon 'arrow-down' style {
-                                class: 'confirm-checkout-chevron',
-                                size: 'xs',
-                                pack : 'solid'
-                            } %}
-                        </button>
-                    </div>
-                {% endif %}
-            </div>
+        {# On the edit-order page the amount that filters the channels is the order total,
+           not the cart — the cart is empty or holds something else entirely by then. Only
+           the id travels; the controller loads the order itself and checks it belongs to
+           this customer, so the amount is still never taken from the client. #}
+        {% set subMethodsRouteParams = { paymentMethodId: payment.id } %}
+        {% if page.order is defined and page.order %}
+            {% set subMethodsRouteParams = subMethodsRouteParams|merge({ orderId: page.order.id }) %}
         {% endif %}
+
+        <div class="cr-payment-sub-methods"
+             data-cr-payment-sub-methods
+             data-cr-payment-sub-methods-options='{{ {
+                 url: path('frontend.cr.payment.sub-methods', subMethodsRouteParams),
+                 selectUrl: path('frontend.cr.payment.sub-methods.select', subMethodsRouteParams),
+                 paymentMethodInputSelector: '#paymentMethod' ~ payment.id,
+                 required: crPaymentContract.requiresGatewayChannel
+             }|json_encode }}'>
+            <div class="cr-payment-sub-methods-loader" role="status">
+                {{ 'payment.subMethods.loading'|trans|sw_sanitize }}
+            </div>
+            <noscript>
+                {# With no JavaScript the channel list can never load, so the loader is a
+                   lie either way and goes. What that costs depends on the handler.
+
+                   A gateway that will not pick a channel for the customer cannot be paid
+                   without one, so the order button is hidden — rather than disabled,
+                   because CSS is all a noscript block has — and the customer is told why.
+
+                   A gateway that falls back to its own bank list is still perfectly
+                   orderable, and Tpay and PayU both are. Hiding the button there stranded
+                   a customer over a picker they never needed, and the message would have
+                   claimed the method requires JavaScript, which for them is untrue. #}
+                <style>
+                    .cr-payment-sub-methods-loader { display: none !important; }
+                    {% if crPaymentContract.requiresGatewayChannel %}
+                        #confirmFormSubmit { display: none !important; }
+                    {% endif %}
+                </style>
+                {% if crPaymentContract.requiresGatewayChannel %}
+                    <div class="payment-sub-methods-unavailable" role="status">
+                        {{ 'payment.subMethods.noScript'|trans|sw_sanitize }}
+                    </div>
+                {% endif %}
+            </noscript>
+        </div>
     {% endif %}
 
 {% endblock %}

@@ -12,7 +12,7 @@
     "checkPayment": {
       "waitingText": "Oczekiwanie na potwierdzenie płatności...",
       "successText": "Płatność została potwierdzona",
-      "successSubtitle": "Dziękujemy! Za chwilę przejdziesz dalej.",
+      "successSubtitle": "Dziękujemy! Twoje zamówienie jest opłacone.",
       "failText": "Upłynął czas oczekiwania na płatność",
       "failSubtitle": "Nie otrzymaliśmy potwierdzenia płatności na czas.",
       "declinedText": "Płatność nie powiodła się",
@@ -29,7 +29,14 @@
       "countdown": "Przekierowanie za",
       "second": "sekundę",
       "seconds": "sekund",
-      "redirectingNow": "Przekierowanie..."
+      "redirectingNow": "Przekierowanie...",
+      "redirectFailed": "Nie udało się rozpocząć płatności. Wróć do sklepu i spróbuj ponownie lub wybierz inną metodę płatności."
+    },
+    "subMethods": {
+      "loading": "Wczytywanie dostępnych opcji płatności...",
+      "unavailable": "Ta metoda płatności jest chwilowo niedostępna dla tego zamówienia. Wybierz inną metodę.",
+      "required": "Wybierz jedną z opcji powyżej, aby kontynuować.",
+      "noScript": "Ta metoda płatności wymaga włączonej obsługi JavaScript. Włącz ją albo wybierz inną metodę."
     }
   }
 }

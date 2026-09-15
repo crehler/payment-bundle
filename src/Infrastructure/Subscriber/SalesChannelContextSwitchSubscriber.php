@@ -12,19 +12,18 @@ declare(strict_types=1);
 namespace Crehler\PaymentBundle\Infrastructure\Subscriber;
 
 use Crehler\PaymentBundle\Application\Service\CustomerPaymentSubMethod\CustomerPaymentSubMethodService;
-use Crehler\PaymentBundle\Domain\Contract\{CustomerRepositoryPort, PaymentSubMethodPort};
+use Crehler\PaymentBundle\Application\Service\SubMethodSelectionValidator;
+use Crehler\PaymentBundle\Domain\Contract\CustomerRepositoryPort;
 use Crehler\PaymentBundle\Domain\Entity\CustomerPaymentSubMethod\CustomerPaymentSubMethod;
 use Crehler\PaymentBundle\Domain\Exception\DomainException;
 use Crehler\PaymentBundle\Infrastructure\Resolver\PaymentSubMethodSessionResolver;
-use Crehler\PaymentBundle\Shared\{AmountFormat, EnhancedLogger};
-use Shopware\Core\Checkout\Cart\SalesChannel\CartService;
+use Crehler\PaymentBundle\Shared\EnhancedLogger;
 use Shopware\Core\Checkout\Payment\PaymentMethodEntity;
 use Shopware\Core\Framework\Routing\RoutingException;
 use Shopware\Core\System\SalesChannel\Event\SalesChannelContextSwitchEvent;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
-use Throwable;
 
 use function is_scalar;
 use function strtolower;
@@ -36,21 +35,20 @@ use function strtolower;
  * This is the single entry point for setting the sub-method — there is no dedicated
  * write endpoint.
  *
- * Because it is the only entry point, it is also the only place that can validate:
+ * Because it is the only entry point, it is also the only place that CAN validate:
  * the value is sent straight to the gateway later on, and it is persisted on the
  * customer account, so an unchecked value is a permanent bad record (WT-910 pushed
  * a non-existent bank, 300 characters, a number, an SQL-like string and an HTML
- * script fragment through it). Only sub-method codes the provider actually offers
- * for the given payment method are accepted.
+ * script fragment through it). What the rules are is SubMethodSelectionValidator's
+ * business; that nothing reaches the session or the account without passing them is
+ * this class's.
  */
 readonly class SalesChannelContextSwitchSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private CustomerPaymentSubMethodService $customerPaymentSubMethodService,
         private CustomerRepositoryPort $customerRepositoryPort,
-        private PaymentSubMethodPort $paymentSubMethodPort,
-        private CartService $cartService,
-        private AmountFormat $amountFormat,
+        private SubMethodSelectionValidator $selectionValidator,
         private RequestStack $requestStack,
         private EnhancedLogger $logger,
     ) {
@@ -84,7 +82,27 @@ readonly class SalesChannelContextSwitchSubscriber implements EventSubscriberInt
         // the method being switched to; only fall back to the context when absent.
         $paymentMethod = $this->resolvePaymentMethod($paymentMethodId, $salesChannelContext);
 
-        if ($paymentMethod === null || !$this->isOfferedSubMethod($paymentMethod, $subPaymentMethodId, $salesChannelContext)) {
+        if ($paymentMethod === null) {
+            throw RoutingException::invalidRequestParameter('paymentSubMethod');
+        }
+
+        // A channel chosen for a method the customer is now leaving is stale, not invalid.
+        //
+        // The widget lives inside Shopware's changePaymentForm, so switching the payment
+        // method serialises whatever channel is still checked under the previous one. That
+        // reached here as gpay-for-a-bank-transfer and threw: choosing a wallet channel and
+        // then changing the method was a hard 400 with no way out but a fresh session.
+        //
+        // Ignoring it is safe. The pairing is what carries meaning, so a value that no
+        // longer matches its method says nothing worth persisting — and the choice already
+        // stored for the method being left is untouched, so going back to it re-selects the
+        // same channel. Garbage aimed at the CURRENT method still throws below; that is the
+        // case the validation was added for (WT-910).
+        if ($this->selectionValidator->isStaleForMethod($dataBag->get('paymentSubMethodFor'), $paymentMethod)) {
+            return;
+        }
+
+        if (!$this->selectionValidator->isOffered($paymentMethod, $subPaymentMethodId, $salesChannelContext)) {
             throw RoutingException::invalidRequestParameter('paymentSubMethod');
         }
 
@@ -144,62 +162,5 @@ readonly class SalesChannelContextSwitchSubscriber implements EventSubscriberInt
         // context already carries the switched-to method by the time we run. A different
         // id here means the switch did not resolve to it — reject rather than guess.
         return null;
-    }
-
-    /**
-     * Is the code one the provider currently offers for this payment method?
-     *
-     * The cart total is passed as the payment value because providers filter banks by
-     * amount limits; using 0 would reject perfectly valid banks that have a minimum.
-     */
-    private function isOfferedSubMethod(
-        PaymentMethodEntity $paymentMethod,
-        string $subPaymentMethodId,
-        SalesChannelContext $context,
-    ): bool {
-        if ($subPaymentMethodId === '') {
-            return false;
-        }
-
-        try {
-            $subMethods = $this->paymentSubMethodPort->getPaymentSubMethods(
-                paymentMethodEntity: $paymentMethod,
-                paymentValue: $this->cartTotalInMinorUnits($context),
-                context: $context,
-            );
-        } catch (Throwable $e) {
-            // Fail closed: without a list there is nothing to compare against, so reject
-            // instead of letting an unvalidated value through. The client gets a 400 and
-            // retries, which is cheaper than a permanently wrong record on the account.
-            // Accepting would not save a working checkout either — with the provider down
-            // the storefront has nothing to render the bank list from in the first place.
-            $this->logger->error('Could not load payment sub-methods for validation; rejecting value', [
-                'paymentMethodId' => $paymentMethod->getId(),
-                'exception' => $e->getMessage(),
-            ]);
-
-            return false;
-        }
-
-        foreach ($subMethods as $subMethod) {
-            if ($subMethod->providerId === $subPaymentMethodId) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private function cartTotalInMinorUnits(SalesChannelContext $context): int
-    {
-        try {
-            // caching: false — the cart must be recalculated against the context after the
-            // switch, because the sub-method amount limits are checked against this total.
-            $cart = $this->cartService->getCart($context->getToken(), $context, caching: false);
-
-            return $this->amountFormat->floatToInt($cart->getPrice()->getTotalPrice());
-        } catch (Throwable) {
-            return 0;
-        }
     }
 }

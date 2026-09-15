@@ -19,6 +19,7 @@ use Symfony\Component\HttpFoundation\{Request, Response};
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 
+use function is_array;
 use function is_string;
 
 #[Route(defaults: ['_routeScope' => ['storefront']])]
@@ -41,6 +42,9 @@ final class PaymentTransitionController extends StorefrontController
         $target = $request->query->get('target');
         $signature = $request->query->get('sig');
         $providerLogo = $request->query->get('logo', 'default');
+        $actionToken = $request->query->get('actionToken');
+        $actionSignature = $request->query->get('actionSig');
+        $action = null;
 
         // Open-redirect guard: the page JS does window.location.href = target, so the
         // target must be exactly the gateway URL the server produced. We only emit a
@@ -48,6 +52,19 @@ final class PaymentTransitionController extends StorefrontController
         // client-crafted ?target=https://evil.com has no valid signature → 404).
         if (!is_string($target) || $target === '' || !is_string($signature) || !$this->urlSigner->verify($target, $signature)) {
             throw new NotFoundHttpException();
+        }
+
+        if (is_string($actionToken) && $actionToken !== '') {
+            if (!is_string($orderId) || !$this->urlSigner->verify($orderId . '|' . $actionToken, (string) $actionSignature)) {
+                throw new NotFoundHttpException();
+            }
+
+            $sessionKey = 'cr_payment_action_' . $actionToken;
+            $action = $request->getSession()->get($sessionKey);
+            $request->getSession()->remove($sessionKey);
+            if (!is_array($action) || !is_string($action['method'] ?? null)) {
+                throw new NotFoundHttpException();
+            }
         }
 
         // Load the finish page to get order data for GA tracking
@@ -58,6 +75,7 @@ final class PaymentTransitionController extends StorefrontController
             'target' => $target,
             'orderId' => $orderId,
             'providerLogo' => $providerLogo,
+            'paymentAction' => $action,
             'controllerName' => 'checkout',
             'controllerAction' => 'finishpage',
         ]);

@@ -9,8 +9,10 @@
     {# Find the card payment method that is currently selected #}
     {% set selectedCardPayment = null %}
     {% for payment in page.paymentMethods %}
-        {% set crPaymentType = payment.extensions[constant('Crehler\\PaymentBundle\\Infrastructure\\Struct\\PaymentMethodTypeStruct::API_ALIAS')] %}
-        {% if crPaymentType and crPaymentType.isCard and context.paymentMethod.id is same as(payment.id) %}
+        {% set crPaymentContract = payment.extensions[constant('Crehler\\PaymentBundle\\Infrastructure\\Extension\\PaymentMethodExtension::EXTENSION_NAME')] %}
+        {% if crPaymentContract
+            and crPaymentContract.type is same as(constant('Crehler\\PaymentBundle\\Domain\\Enum\\PaymentType::CARD'))
+            and context.paymentMethod.id is same as(payment.id) %}
             {% set selectedCardPayment = payment %}
         {% endif %}
     {% endfor %}

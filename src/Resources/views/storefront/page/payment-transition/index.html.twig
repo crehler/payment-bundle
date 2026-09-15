@@ -205,6 +205,11 @@
             color: #667eea;
         }
 
+        .payment-countdown-text.payment-transition-error {
+            color: #c0392b;
+            font-weight: 600;
+        }
+
         /* Hidden elements for GA tracking */
         .finish-ordernumber {
             display: none;
@@ -300,6 +305,15 @@
             var countdown = 3;
             var countdownEl = document.querySelector('.payment-countdown-text');
             var target = '{{ target|e('js') }}';
+            // Twig's json_encode is plain PHP json_encode (no JSON_HEX_TAG), so a raw
+            // closing script tag inside the gateway body would end this element. The js
+            // escaper hex-encodes it, and JSON.parse restores the object (null stays null).
+            //
+            // Note the wording: this comment may not spell that tag out literally. The HTML
+            // tokenizer does not know what a JS comment is, so writing it here would end the
+            // script mid-file — which is exactly what happened, and it cost every storefront
+            // redirect to a gateway until it was spotted.
+            var paymentAction = JSON.parse('{{ paymentAction|default(null)|json_encode|e('js') }}');
 
             function updateCountdown() {
                 if (countdown > 0) {
@@ -310,7 +324,50 @@
                 } else {
                     countdownEl.innerHTML = '{{ "payment.transition.redirectingNow"|trans }}';
                     setTimeout(function() {
-                        window.location.href = target;
+                        if (!paymentAction || paymentAction.method === 'GET') {
+                            window.location.href = target;
+                            return;
+                        }
+
+                        var form = document.createElement('form');
+                        form.method = paymentAction.method;
+                        form.action = target;
+                        form.style.display = 'none';
+
+                        var contentType = (paymentAction.contentType || '').toLowerCase();
+                        var hasBody = typeof paymentAction.body === 'string' && paymentAction.body !== '';
+
+                        // A form can only carry application/x-www-form-urlencoded.
+                        // createRedirectResponse() already rejects other content types for a
+                        // non-GET action, so this is a fail-safe: abort rather than submit an
+                        // empty form and drop the body (which reads to the gateway as a valid
+                        // but empty request). A bodyless POST stays legal and submits as-is.
+                        if (hasBody && contentType.indexOf('application/x-www-form-urlencoded') === -1) {
+                            console.error(
+                                'Crehler payment transition: unsupported payment action content type, redirect aborted',
+                                contentType
+                            );
+
+                            // textContent, not innerHTML: the snippet is admin-editable, so it
+                            // must never be able to inject markup into the page.
+                            countdownEl.textContent = '{{ 'payment.transition.redirectFailed'|trans|e('js') }}';
+                            countdownEl.classList.add('payment-transition-error');
+
+                            return;
+                        }
+
+                        if (hasBody) {
+                            new URLSearchParams(paymentAction.body).forEach(function(value, key) {
+                                var input = document.createElement('input');
+                                input.type = 'hidden';
+                                input.name = key;
+                                input.value = value;
+                                form.appendChild(input);
+                            });
+                        }
+
+                        document.body.appendChild(form);
+                        form.submit();
                     }, 300);
                 }
             }

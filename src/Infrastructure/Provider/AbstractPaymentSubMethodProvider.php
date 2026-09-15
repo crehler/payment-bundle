@@ -17,13 +17,16 @@ use Shopware\Core\Checkout\Payment\PaymentMethodEntity;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 
 /**
- * Base for provider sub-method lists (banks, wallets, BNPL).
+ * Base for provider channel lists (banks, wallets, BNPL).
  *
- * The bundle owns the shared shape: short-circuit when the payment method is
- * not supported, apply min/max amount filtering against the checkout value and
- * map raw entries to PaymentSubMethod value objects. A provider implements only
- * supportsPaymentMethod() and fetchRawSubMethods() (the gateway API call plus
- * any gateway-specific filtering such as group/availability).
+ * The bundle owns the shared shape: apply min/max amount filtering against the checkout
+ * value and map raw entries to PaymentSubMethod value objects. A provider implements only
+ * supportedPaymentTypes() — a declaration — and fetchRawSubMethods(), the gateway call
+ * plus any gateway-specific filtering such as group or availability.
+ *
+ * getPaymentSubMethods() is final and no longer re-checks whether this provider owns the
+ * method. PaymentSubMethodAdapter already answered that from the declared types, and
+ * asking twice in a row was how the two copies of that question drifted apart.
  */
 abstract class AbstractPaymentSubMethodProvider implements PaymentSubMethodProvider
 {
@@ -32,10 +35,6 @@ abstract class AbstractPaymentSubMethodProvider implements PaymentSubMethodProvi
         int $paymentValue,
         SalesChannelContext $context,
     ): array {
-        if (!$this->supportsPaymentMethod($paymentMethodEntity)) {
-            return [];
-        }
-
         $subMethods = [];
 
         foreach ($this->fetchRawSubMethods($paymentMethodEntity, $paymentValue, $context) as $raw) {
@@ -57,9 +56,13 @@ abstract class AbstractPaymentSubMethodProvider implements PaymentSubMethodProvi
     }
 
     /**
-     * Fetch the provider's raw sub-methods from its gateway API. Gateway-specific
-     * filtering (group exclusion, availability) belongs here; min/max amount
-     * filtering is handled by the bundle.
+     * Fetch the provider's raw channels from its gateway API. Gateway-specific filtering
+     * (group exclusion, availability) belongs here; min/max amount filtering is handled
+     * above.
+     *
+     * Populate minAmount/maxAmount whenever the gateway publishes per-channel limits —
+     * that is what feeds the filter. A provider that leaves them null makes the filter
+     * inert for its channels and relies entirely on the gateway having filtered already.
      *
      * @return iterable<RawSubMethod>
      */

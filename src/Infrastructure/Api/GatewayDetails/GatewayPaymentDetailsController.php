@@ -58,6 +58,10 @@ final class GatewayPaymentDetailsController
             return new JsonResponse(['error' => 'order_not_found'], Response::HTTP_NOT_FOUND);
         }
 
+        foreach ($order->getTransactions() ?? [] as $orderTransaction) {
+            $orderTransaction->setOrder($order);
+        }
+
         // Build the list of order transactions a Crehler provider owns (newest first),
         // remembering which provider handles each so we can fetch details for one.
         $supported = [];

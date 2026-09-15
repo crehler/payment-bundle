@@ -6,6 +6,10 @@
   hidden [data-saved-card-token] input; this partial renders only the dropdown UI so
   every gateway stops re-implementing the same markup.
 
+  Selecting a card writes the token into that input and dispatches a bubbling `change`
+  event on it. Provider plugins must listen for that event — watching the input's
+  `value` attribute does not work, because the plugin assigns the IDL property.
+
   Params:
     savedCards        (SavedCardCollection)  required — cards to list
     wrapperClass      (string)  provider styling hook, default 'cr-saved-cards'

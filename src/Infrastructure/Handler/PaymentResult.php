@@ -21,15 +21,26 @@ final readonly class PaymentResult
         public ?string $gatewayOrderId = null,
         public bool $success = true,
         public ?string $errorMessage = null,
+        public ?string $redirectMethod = null,
+        public ?string $redirectContentType = null,
+        public ?string $redirectContentBodyRaw = null,
     ) {
     }
 
-    public static function success(string $redirectUrl, ?string $gatewayOrderId = null): self
-    {
+    public static function success(
+        string $redirectUrl,
+        ?string $gatewayOrderId = null,
+        ?string $redirectMethod = null,
+        ?string $redirectContentType = null,
+        ?string $redirectContentBodyRaw = null,
+    ): self {
         return new self(
             redirectUrl: $redirectUrl,
             gatewayOrderId: $gatewayOrderId,
-            success: true
+            success: true,
+            redirectMethod: $redirectMethod,
+            redirectContentType: $redirectContentType,
+            redirectContentBodyRaw: $redirectContentBodyRaw,
         );
     }
 

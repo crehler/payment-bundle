@@ -13,6 +13,13 @@ services:
   Crehler\PaymentBundle\Infrastructure\StoreApi\CheckPaymentStatus\AbstractCheckPaymentStatusRoute:
     alias: 'Crehler\PaymentBundle\Infrastructure\StoreApi\CheckPaymentStatus\CheckPaymentStatusRoute'
 
+  # Explicit, because CachedPaymentSubMethodAdapter decorates PaymentSubMethodAdapter and
+  # both implement the port — autowiring by interface stops being unambiguous once the
+  # decorated service is renamed to .inner. The alias points at the decorated id, so
+  # consumers get the cache and the decoration chain stays intact.
+  Crehler\PaymentBundle\Domain\Contract\PaymentSubMethodPort:
+    alias: 'Crehler\PaymentBundle\Infrastructure\Adapter\PaymentSubMethodAdapter'
+
   Crehler\PaymentBundle\Shared\EnhancedLogger:
     public: true
     arguments:

@@ -29,6 +29,17 @@
 
 ### Fixed
 
+- **The gateway details panel asked every gateway about the wrong sales channel.** All four
+  providers open `getDetails()` with `$orderTransaction->getOrder()?->getSalesChannelId()`,
+  and `GatewayPaymentDetailsController` never loaded that relation — the DAL populates a
+  transaction's `orderId` but not the inverse association, so the call has read `null` since
+  the endpoint was written on 2026-06-18. Shops configured globally never noticed, because
+  the config service falls back to the global value; a shop with per-sales-channel gateway
+  credentials would have been asked about the wrong merchant, or the wrong environment, and
+  told there was no transaction for an order that is paid. The controller now hands each
+  transaction the order it already holds, rather than adding a `transactions.order`
+  association that would re-read the same order once per transaction.
+
 - **The rendered description can no longer exceed the gateway's limit.** `render()` accepts an
   optional `$maxLengthBytes`; over-long output is cut with `mb_strcut()` and logged as a warning.
   Gateways validate this field with `strlen()`, so the limit counts bytes — Polish characters cost

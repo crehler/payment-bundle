@@ -32,6 +32,84 @@
   50% { box-shadow: 0 0 0 5px var(--payment-submethod-glow); }
 }
 
+// Async widget: the channel list arrives after the page has painted, so the row needs a
+// placeholder while it loads and a readable dead end when the gateway offers nothing.
+.cr-payment-sub-methods-loader {
+  margin-top: 16px;
+  padding: 12px 0;
+  color: #6b7280;
+  font-size: 14px;
+
+  &::after {
+    content: '';
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    margin-left: 8px;
+    vertical-align: -1px;
+    border: 2px solid var(--payment-submethod-border);
+    border-top-color: var(--payment-submethod-border-selected);
+    border-radius: 50%;
+    animation: crPaymentSubMethodsSpin 0.8s linear infinite;
+  }
+}
+
+@keyframes crPaymentSubMethodsSpin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cr-payment-sub-methods-loader::after {
+    animation: none;
+  }
+}
+
+// Swapping the channel writes to the server, so the widget is briefly out of date. Dimming
+// it beats a spinner that would make a sub-second exchange feel like a page load.
+.cr-payment-sub-methods--busy {
+  opacity: 0.6;
+  pointer-events: none;
+  transition: opacity var(--payment-submethod-transition);
+}
+
+.payment-sub-methods-unavailable,
+.payment-sub-methods-required {
+  margin-top: 16px;
+  padding: 10px 12px;
+  border-radius: var(--payment-submethod-radius);
+  font-size: 14px;
+  animation: fadeSlideIn var(--payment-submethod-transition);
+}
+
+.payment-sub-methods-unavailable {
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.payment-sub-methods-required {
+  border: 1px solid #fde68a;
+  background: #fffbeb;
+  color: #92400e;
+}
+
+// The method stays visible so the customer can read why, but it is greyed out — the JS
+// has already disabled its radio, this only makes that visible.
+.cr-payment-sub-methods--unavailable {
+  .cr-payment-sub-methods-loader {
+    display: none;
+  }
+}
+
+// Greys out the row that owns an unavailable widget. Done in CSS rather than by having the
+// JS reach up the tree and add a class to a Shopware-owned element.
+.payment-method-radio:has(.cr-payment-sub-methods--unavailable) {
+  .payment-method-label {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
 // Main Container States
 .payment-sub-methods {
   &:not(.payment-sub-methods--has-value) {

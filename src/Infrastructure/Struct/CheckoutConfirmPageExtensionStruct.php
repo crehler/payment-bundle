@@ -13,6 +13,17 @@ namespace Crehler\PaymentBundle\Infrastructure\Struct;
 
 use Shopware\Core\Framework\Struct\Struct;
 
+/**
+ * Page-level state for the checkout confirm page, describing the CURRENTLY SELECTED
+ * payment method only.
+ *
+ * A flag named after the bank family used to live here and gate the sub-method selector in
+ * Twig. It was set for the bank, wallet and deferred families at once — named for one of
+ * them, covering three — and derived from a class-name guess, so wallet and instalment
+ * handlers fell through to false and their channel lists never rendered. The gate now asks
+ * the method's own contract (crPaymentContract.usesGatewayChannels) plus the number of
+ * channels actually returned, so nothing page-level is needed for it.
+ */
 final class CheckoutConfirmPageExtensionStruct extends Struct
 {
     public const API_ALIAS = 'cr_payment_checkout_confirm_extension';
@@ -24,7 +35,6 @@ final class CheckoutConfirmPageExtensionStruct extends Struct
      *                                      provider ships no form.
      */
     public function __construct(
-        public readonly bool $isBankPayment = false,
         public readonly bool $isBlikPayment = false,
         public readonly bool $isCardPayment = false,
         public readonly ?ConsentStruct $consent = null,
@@ -42,7 +52,6 @@ final class CheckoutConfirmPageExtensionStruct extends Struct
     public function withConsent(?ConsentStruct $consent): self
     {
         return new self(
-            $this->isBankPayment,
             $this->isBlikPayment,
             $this->isCardPayment,
             $consent,
@@ -55,7 +64,6 @@ final class CheckoutConfirmPageExtensionStruct extends Struct
     public function withBundleConfig(bool $embedCardForm, string $blikInputPosition): self
     {
         return new self(
-            $this->isBankPayment,
             $this->isBlikPayment,
             $this->isCardPayment,
             $this->consent,
@@ -68,7 +76,6 @@ final class CheckoutConfirmPageExtensionStruct extends Struct
     public function withCardFormTemplate(?string $cardFormTemplate): self
     {
         return new self(
-            $this->isBankPayment,
             $this->isBlikPayment,
             $this->isCardPayment,
             $this->consent,
