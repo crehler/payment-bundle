@@ -47,6 +47,10 @@ final readonly class OrderTransactionRepository implements OrderTransactionRepos
         $criteria->addAssociation('order.lineItems.product');
         $criteria->addAssociation('order.billingAddress.country');
         $criteria->addAssociation('order.addresses.country');
+        // The shipping address hangs off the delivery, not the order, and an association
+        // that is not requested comes back empty rather than lazily loaded — the same DAL
+        // rule that left transactions without their order in the gateway-details endpoint.
+        $criteria->addAssociation('order.deliveries.shippingOrderAddress.country');
         $criteria->addAssociation('order.language.locale');
         $criteria->addAssociation('order.orderCustomer');
         $criteria->addAssociation('order.orderCustomer.customer');

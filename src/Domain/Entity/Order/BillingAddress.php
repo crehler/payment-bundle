@@ -22,7 +22,13 @@ final readonly class BillingAddress
         public string $lastName,
         public string $street,
         public string $city,
-        public string $zipCode,
+        /**
+         * Null when the address genuinely has no postal code. Shopware types
+         * OrderAddressEntity::getZipcode() as ?string because whole countries (Ireland,
+         * Hong Kong, Panama) have none, and a non-nullable property here turned that into
+         * a TypeError while building the order — before any gateway was even called.
+         */
+        public ?string $zipCode,
         public string $countryCode,
         public string $countryName,
         public ?string $phone = null,

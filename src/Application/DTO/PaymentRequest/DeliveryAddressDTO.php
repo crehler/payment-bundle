@@ -19,7 +19,8 @@ final readonly class DeliveryAddressDTO
     public function __construct(
         public string $street,
         public string $city,
-        public string $postalCode,
+        /** Null when the address has no postal code — see BillingAddress::$zipCode. */
+        public ?string $postalCode,
         public string $countryCode,
         public ?string $recipientName = null,
         public ?string $recipientEmail = null,

@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Crehler\PaymentBundle\Domain\Factory;
 
-use Crehler\PaymentBundle\Domain\Entity\Order\{BillingAddress, Order};
+use Crehler\PaymentBundle\Domain\Entity\Order\{BillingAddress, Order, ShippingAddress};
 use Crehler\PaymentBundle\Domain\ValueObjects\{LineItem, Money};
 use Crehler\PaymentBundle\Shared\AmountFormat;
 use Shopware\Core\Checkout\Cart\LineItem\LineItem as ShopwareLineItem;
@@ -45,6 +45,8 @@ final readonly class OrderFactory
             lineItems: $this->createLineItems($orderEntity->getLineItems(), $currencyCode),
             customFields: $orderEntity->getCustomFields() ?? [],
             salesChannelId: $orderEntity->getSalesChannelId(),
+            shippingAddress: $this->createShippingAddress($orderEntity),
+            locale: $orderEntity->getLanguage()?->getLocale()?->getCode(),
         );
     }
 
@@ -71,6 +73,40 @@ final readonly class OrderFactory
             zipCode: $addressEntity->getZipcode(),
             countryCode: $addressEntity->getCountry()->getIso(),
             countryName: $addressEntity->getCountry()->getName(),
+            phone: $addressEntity->getPhoneNumber(),
+            customFields: $addressEntity->getCustomFields() ?? [],
+        );
+    }
+
+    /**
+     * The address the goods actually go to, which is not always the one that pays.
+     *
+     * Shopware hangs it off the delivery, not the order, and an order can legitimately
+     * have none — a download-only cart never creates a delivery. It can also have several
+     * (split shipments); the first is the one a gateway means by "shipping address", and
+     * a provider that needs per-delivery detail has the order entity to go back to.
+     *
+     * Returns null rather than falling back to the billing address. Those two carry
+     * different meanings to a BNPL underwriter, and quietly substituting one for the
+     * other would hand the gateway a confident answer nobody checked.
+     */
+    private function createShippingAddress(OrderEntity $orderEntity): ?ShippingAddress
+    {
+        $addressEntity = $orderEntity->getDeliveries()?->getShippingAddress()->first();
+
+        if ($addressEntity === null) {
+            return null;
+        }
+
+        return new ShippingAddress(
+            id: $addressEntity->getId(),
+            firstName: $addressEntity->getFirstName(),
+            lastName: $addressEntity->getLastName(),
+            street: $addressEntity->getStreet(),
+            city: $addressEntity->getCity(),
+            zipCode: $addressEntity->getZipcode(),
+            countryCode: $addressEntity->getCountry()?->getIso() ?? '',
+            countryName: $addressEntity->getCountry()?->getName() ?? '',
             phone: $addressEntity->getPhoneNumber(),
             customFields: $addressEntity->getCustomFields() ?? [],
         );

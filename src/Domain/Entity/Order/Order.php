@@ -32,6 +32,23 @@ final readonly class Order
         public array $lineItems,
         public array $customFields = [],
         public ?string $salesChannelId = null,
+        /**
+         * Null for an order with no delivery — a download-only cart, or a shop whose
+         * checkout never asked for one. Gateways that need a shipping address (PayNow's
+         * PayPo will not underwrite without it) have to treat that as a real case rather
+         * than assuming the billing address doubles as one.
+         */
+        public ?ShippingAddress $shippingAddress = null,
+        /**
+         * The order's own language as a BCP47 tag — "pl-PL", "en-GB". Shopware stores it
+         * in exactly that shape, which is the shape gateways ask for.
+         *
+         * Null when the association was not loaded or the order predates one. Providers
+         * should omit the field rather than substitute a default: every gateway already
+         * has its own, and guessing one here would silently pick the language a customer
+         * reads their payment page in.
+         */
+        public ?string $locale = null,
     ) {
     }
 

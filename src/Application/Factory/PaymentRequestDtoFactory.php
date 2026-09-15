@@ -16,7 +16,7 @@ use Crehler\PaymentBundle\Application\DTO\PaymentRequest\{BuyerDTO, DeliveryAddr
 use Crehler\PaymentBundle\Domain\Entity\Customer;
 use Crehler\PaymentBundle\Domain\Entity\Order\{BillingAddress, Order, ShippingAddress};
 use Crehler\PaymentBundle\Domain\Entity\OrderTransaction\OrderTransaction;
-use Crehler\PaymentBundle\Domain\ValueObjects\LineItem;
+use Crehler\PaymentBundle\Domain\ValueObjects\{LineItem, StreetAddress};
 use Crehler\PaymentBundle\Shared\EnhancedLogger;
 
 /**
@@ -87,7 +87,14 @@ final readonly class PaymentRequestDtoFactory
         return new DeliveryAddressDTO(
             street: $shippingAddress->street,
             city: $shippingAddress->city,
-            postalCode: $shippingAddress->postalCode,
+            // ShippingAddress calls it zipCode; reading ->postalCode here threw as soon as
+            // anyone actually passed a shipping address. Nobody did until now, because
+            // Order carried no shipping address to pass.
+            //
+            // Normalised here rather than at each provider: upper-casing is what every
+            // carrier and gateway compares against, so the shared DTO should already
+            // carry the comparable form.
+            postalCode: StreetAddress::normalizeZipCode($shippingAddress->zipCode),
             countryCode: $shippingAddress->countryCode,
             recipientName: $shippingAddress->firstName . ' ' . $shippingAddress->lastName,
             recipientEmail: null,
