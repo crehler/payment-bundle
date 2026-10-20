@@ -54,7 +54,7 @@ final class PaymentReturnController extends AbstractController
 
     #[Route(
         path: 'payment/return/{orderTransactionId}',
-        name: 'crehler.bundle.payment.return',
+        name: 'frontend.cr.payment.return',
         defaults: ['auth_required' => false],
         methods: ['GET']
     )]

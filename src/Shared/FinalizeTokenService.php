@@ -58,11 +58,17 @@ final class FinalizeTokenService
      * payment JWT used by the pre-CB-332 notification pipeline is therefore both
      * redundant and harmful here: it exposes a payment secret and can exceed a
      * gateway's callback URL limit (ING Pay: 300 characters).
+     *
+     * Both routes built here are named frontend.* on purpose: Shopware's storefront
+     * router inserts the sales channel's base URL (/en, /pl) only for route names
+     * starting with frontend., widgets. or payment. Under any other name a shop whose
+     * every domain carries a path suffix got https://shop/payment/return/..., which
+     * matches no sales channel domain and fails before reaching the controller (WT-1029).
      */
     public function buildNotificationUrl(): string
     {
         return $this->router->generate(
-            'crehler.bundle.payment.notification',
+            'frontend.cr.payment.notification',
             referenceType: UrlGeneratorInterface::ABSOLUTE_URL,
         );
     }
@@ -106,7 +112,7 @@ final class FinalizeTokenService
         $expiresAt = time() + self::RETURN_URL_TTL;
 
         return $this->router->generate(
-            'crehler.bundle.payment.return',
+            'frontend.cr.payment.return',
             [
                 'orderTransactionId' => $orderTransaction->id,
                 'exp' => $expiresAt,

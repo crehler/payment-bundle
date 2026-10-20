@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+### Fixed
+
+- **Return and notification URLs lost the sales channel's path prefix (WT-1029).** Shopware's
+  storefront router adds the domain's base URL (`/en`, `/pl`) only to routes named `frontend.*`,
+  `widgets.*` or `payment.*`; the bundle's routes were named `crehler.bundle.payment.*`. In a shop
+  whose every sales channel domain has a path suffix the customer came back from the gateway to
+  `https://shop/payment/return/…`, which matches no domain — "sales channel not found" instead of
+  the order confirmation. Routes renamed to `frontend.cr.payment.return` /
+  `frontend.cr.payment.notification`; the URL paths are unchanged.
+
 ### Added
 
 - **`{{ orderId }}` and `{{ orderIds }}` tokens in the transaction description.** Integrations that

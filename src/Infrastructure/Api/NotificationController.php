@@ -39,7 +39,7 @@ final class NotificationController extends AbstractController
 
     #[Route(
         path: 'payment/notification',
-        name: 'crehler.bundle.payment.notification',
+        name: 'frontend.cr.payment.notification',
         defaults: ['auth_required' => false],
         methods: ['POST']
     )]
