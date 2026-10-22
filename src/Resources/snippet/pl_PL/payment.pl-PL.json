@@ -1,7 +1,8 @@
 {
   "payment": {
     "consent": {
-      "dataProcessingTitle": "Informacja o przetwarzaniu danych osobowych"
+      "dataProcessingTitle": "Informacja o przetwarzaniu danych osobowych",
+      "readMore": "Więcej"
     },
     "changeMethod": {
       "notEditable": "Tego zamówienia nie można już edytować — płatność została zakończona lub jest w toku."

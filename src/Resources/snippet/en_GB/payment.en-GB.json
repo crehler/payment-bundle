@@ -1,7 +1,8 @@
 {
   "payment": {
     "consent": {
-      "dataProcessingTitle": "Personal data processing notice"
+      "dataProcessingTitle": "Personal data processing notice",
+      "readMore": "Read more"
     },
     "changeMethod": {
       "notEditable": "This order can no longer be edited — the payment is already completed or in progress."

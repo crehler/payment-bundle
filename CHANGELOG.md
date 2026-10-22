@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### Changed
+
+- **Informational consent: one line + "Read more" modal (WT-1030).** A consent with
+  `requiresAcceptance: false` (e.g. a GDPR data-processing notice) was a collapsed `<details>`
+  block. It is now the notice's title in one line with a "Read more" link opening the full text
+  in a Bootstrap modal — how PayNow's own plugins present the notice. Required-acceptance
+  consents (checkbox) are unchanged. New snippet `payment.consent.readMore` (pl-PL, en-GB).
+
 ### Fixed
 
 - **Return and notification URLs lost the sales channel's path prefix (WT-1029).** Shopware's
