@@ -12,6 +12,12 @@
 
 ### Fixed
 
+- **BLIK retry copied the wrong transaction (EX-849).** `createRetryTransactionForOrder()` took the
+  order's most recent transaction as the template. When another transaction was booked after the
+  gateway one — a part of the order already settled by other means, e.g. a credit limit — the retry
+  copied that one: the new transaction went to a handler that never reaches the gateway, failed, and
+  became the order's primary. The template is now the order's primary transaction, falling back to
+  the most recent one for orders without a primary.
 - **Return and notification URLs lost the sales channel's path prefix (WT-1029).** Shopware's
   storefront router adds the domain's base URL (`/en`, `/pl`) only to routes named `frontend.*`,
   `widgets.*` or `payment.*`; the bundle's routes were named `crehler.bundle.payment.*`. In a shop

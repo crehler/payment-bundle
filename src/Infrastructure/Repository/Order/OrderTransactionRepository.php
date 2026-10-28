@@ -16,6 +16,7 @@ use Crehler\PaymentBundle\Domain\Constant\PaymentCustomFields;
 use Crehler\PaymentBundle\Domain\Exception\{OrderTransactionCreationFailedException, OrderTransactionNotFoundException};
 use Shopware\Core\Checkout\Cart\Price\Struct\CalculatedPrice;
 use Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\{OrderTransactionEntity, OrderTransactionStateHandler, OrderTransactionStates};
+use Shopware\Core\Checkout\Order\OrderEntity;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
@@ -134,7 +135,7 @@ final readonly class OrderTransactionRepository implements OrderTransactionRepos
     {
         $context = $context ?? Context::createDefaultContext();
 
-        $template = $this->getLatestTransactionForOrder($orderId, $context);
+        $template = $this->getRetryTemplateForOrder($orderId, $context);
         $paymentMethodId = $template->getPaymentMethodId();
         $templateAmount = $template->getAmount();
 
@@ -201,6 +202,23 @@ final readonly class OrderTransactionRepository implements OrderTransactionRepos
         $orderTransaction = $this->orderTransactionRepository->search($criteria, $context)->first();
 
         return $orderTransaction instanceof OrderTransactionEntity ? $orderTransaction : null;
+    }
+
+    /**
+     * The primary transaction is the one the customer still has to pay. The most recent
+     * one is not a safe template: a side transaction settled by other means (e.g. a part
+     * of the order covered outside the gateway) can be created after it, and copying that
+     * would send the retry through a handler that never reaches the gateway.
+     */
+    private function getRetryTemplateForOrder(string $orderId, Context $context): OrderTransactionEntity
+    {
+        $criteria = new Criteria([$orderId]);
+        $criteria->addAssociation('primaryOrderTransaction');
+
+        $order = $this->orderRepository->search($criteria, $context)->first();
+        $primary = $order instanceof OrderEntity ? $order->getPrimaryOrderTransaction() : null;
+
+        return $primary ?? $this->getLatestTransactionForOrder($orderId, $context);
     }
 
     private function getLatestTransactionForOrder(string $orderId, Context $context): OrderTransactionEntity

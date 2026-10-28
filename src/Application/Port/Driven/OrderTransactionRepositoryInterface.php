@@ -59,7 +59,8 @@ interface OrderTransactionRepositoryInterface
      * Create a new OrderTransaction on an existing order for retry flows
      * (e.g. failed BLIK code, customer wants to try another) and mark it
      * as the order's primary transaction. Copies paymentMethodId and amount
-     * from the most recent transaction but starts with a fresh stateId
+     * from the order's primary transaction (falling back to the most recent
+     * one when the order has no primary) but starts with a fresh stateId
      * (OPEN) and empty customFields — caller's downstream handler must
      * re-populate gateway IDs.
      *
