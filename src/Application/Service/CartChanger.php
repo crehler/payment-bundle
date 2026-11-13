@@ -93,14 +93,24 @@ final readonly class CartChanger
                 }
 
                 $currentCrehlerPrice = $lineItem->getExtension(CrehlerLineItemPrice::getExtensionName());
+                if (!$currentCrehlerPrice instanceof CrehlerLineItemPrice) {
+                    continue;
+                }
+
                 $currentCrehlerPrice = $this->recalculateCrehlerPrice($currentCrehlerPrice, $item['quantity'], $item['discount']);
                 $lineItem->addExtension(CrehlerLineItemPrice::getExtensionName(), $currentCrehlerPrice);
-                if (!$lineItem->hasChildren()) {
+
+                // Only children priced in the first pass take a share of the promotion. A Shopware 6.7
+                // grouped bundle adds its discount as a `discount` child, already included in the parent price.
+                $pricedChildren = $lineItem->getChildren()->filter(
+                    static fn (LineItem $child): bool => $child->getExtension(CrehlerLineItemPrice::getExtensionName()) instanceof CrehlerLineItemPrice
+                );
+                if ($pricedChildren->count() === 0) {
                     continue;
                 }
 
                 $pennyCorrectionCounter = 0;
-                foreach ($lineItem->getChildren() as $child) {
+                foreach ($pricedChildren as $child) {
                     $childPriceParticipation = ($child->getQuantity() * $child->getPrice()->getUnitPrice()) / $lineItem->getPrice()->getTotalPrice();
                     $currentCrehlerChildPrice = $child->getExtension(CrehlerLineItemPrice::getExtensionName());
                     $currentCrehlerChildPrice = $this->recalculateCrehlerPrice($currentCrehlerChildPrice, $item['quantity'], $item['discount'] * $childPriceParticipation);
@@ -113,8 +123,9 @@ final readonly class CartChanger
                 }
 
                 $pennyCorrection = $currentCrehlerPrice->getTotalPrice() - $pennyCorrectionCounter;
+                $child = $pricedChildren->last();
                 /** @var CrehlerLineItemPrice $currentCrehlerChildPrice */
-                $currentCrehlerChildPrice = $lineItem->getChildren()->last()->getExtension(CrehlerLineItemPrice::getExtensionName());
+                $currentCrehlerChildPrice = $child->getExtension(CrehlerLineItemPrice::getExtensionName());
 
                 $child->addExtension(
                     CrehlerLineItemPrice::getExtensionName(),

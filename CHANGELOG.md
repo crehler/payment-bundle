@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### Fixed — cart 500 for Shopware 6.7 product bundles with a promotion (MOD-642)
+
+`CartChanger` no longer fails with `recalculateCrehlerPrice(): Argument #1 must be of type
+CrehlerLineItemPrice, null given` when a promotion applies to a line item whose children were not
+priced in the first pass, e.g. the `discount` child that SwagCommercial ProductBundles adds to a
+grouped bundle item. The promotion share is spread only over children that carry
+`CrehlerLineItemPrice`, and the penny correction now goes to the last of those children.
+
 ### Changed
 
 - **Informational consent: one line + "Read more" modal (WT-1030).** A consent with
